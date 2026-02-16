@@ -1,0 +1,55 @@
+spring:
+  application:
+    name: vaultcore-financial
+
+  datasource:
+    url: jdbc:postgresql://db:5432/vaultcore
+    username: vaultuser
+    password: vaultpass
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        format_sql: true
+        jdbc:
+          batch_size: 50
+        order_inserts: true
+        order_updates: true
+    open-in-view: false
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: "http://keycloak:8080/realms/vaultcore"
+          jwk-set-uri: "http://keycloak:8080/realms/vaultcore/protocol/openid-connect/certs"
+
+server:
+  port: 8080
+
+logging:
+  level:
+    org.springframework.security: INFO
+
+# App-specific placeholders (adjust to your code)
+app:
+  fraud:
+    threshold: 10000
+  jwt:
+    refresh-token-validity-ms: 604800000
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always
