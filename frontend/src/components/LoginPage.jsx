@@ -1,38 +1,74 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { login } from "../services/auth";
+import "./LoginPage.css";
 
 export default function LoginPage() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const navigate = useNavigate();
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setError("");
+    setLoading(true);
 
     try {
       await login(username, password);
-      window.location.href = "/dashboard";
+      navigate("/dashboard");
     } catch (err) {
-      setError(err.message);
+      setError(err.message || "Authentication failed");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div style={{ maxWidth: 360, margin: "4rem auto" }}>
-      <h2>VaultCore Login</h2>
-      <form onSubmit={handleLogin}>
-        <div>
-          <label>Username</label>
-          <input value={username} onChange={(e) => setUsername(e.target.value)} required />
+    <div className="vault-login-wrapper">
+      <div className="vault-login-card">
+        <h1 className="vault-brand">VaultCore Financial</h1>
+        <p className="vault-subtitle">Secure Digital Banking Portal</p>
+
+        <form onSubmit={handleLogin} className="vault-form">
+          <div className="vault-form-group">
+            <label htmlFor="username">Username</label>
+            <input
+              id="username"
+              type="text"
+              value={username}
+              placeholder="Enter your username"
+              onChange={(e) => setUsername(e.target.value)}
+              required
+            />
+          </div>
+
+          <div className="vault-form-group">
+            <label htmlFor="password">Password</label>
+            <input
+              id="password"
+              type="password"
+              value={password}
+              placeholder="Enter your password"
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+          </div>
+
+          {error && <div className="vault-error">{error}</div>}
+
+          <button type="submit" disabled={loading}>
+            {loading ? "Authenticating..." : "Login Securely"}
+          </button>
+        </form>
+
+        <div className="vault-footer">
+          <p>🔒 Protected by JWT Authentication & Enterprise Security Standards</p>
+          <a href="#">Forgot Password?</a>
         </div>
-        <div style={{ marginTop: 12 }}>
-          <label>Password</label>
-          <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
-        </div>
-        {error && <p style={{ color: "red" }}>{error}</p>}
-        <button type="submit" style={{ marginTop: 16 }}>Login</button>
-      </form>
+      </div>
     </div>
   );
 }
