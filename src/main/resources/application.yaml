@@ -3,9 +3,9 @@ spring:
     name: vaultcore-financial
 
   datasource:
-    url: jdbc:postgresql://db:5432/vaultcore
-    username: vaultuser
-    password: vaultpass
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
     driver-class-name: org.postgresql.Driver
 
   jpa:
@@ -40,12 +40,11 @@ logging:
   level:
     org.springframework.security: INFO
 
-# App-specific placeholders (adjust to your code)
+
 app:
   fraud:
     threshold: 10000
-  jwt:
-    refresh-token-validity-ms: 604800000
+ 
 
 management:
   endpoints:
