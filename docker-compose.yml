@@ -15,6 +15,18 @@ services:
       retries: 5
     restart: unless-stopped
 
+  keycloak:
+    image: quay.io/keycloak/keycloak:24.0.5
+    container_name: vaultcore-keycloak
+    command:
+      - start-dev
+    environment:
+      KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN:-admin}
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-admin}
+    ports:
+      - "8081:8080"
+    restart: unless-stopped
+
   backend:
     build: .
     container_name: vaultcore-app
@@ -26,11 +38,14 @@ services:
       SPRING_DATASOURCE_PASSWORD: vaultpass
       SPRING_JPA_HIBERNATE_DDL_AUTO: validate
       SPRING_FLYWAY_ENABLED: "true"
+      OAUTH2_ISSUER_URI: http://keycloak:8080/realms/vaultcore
     ports:
       - "8080:8080"
     depends_on:
       db:
         condition: service_healthy
+      keycloak:
+        condition: service_started
     restart: unless-stopped
 
   frontend:

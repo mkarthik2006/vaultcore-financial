@@ -1,43 +1,48 @@
-let accessToken = null;
+import Keycloak from "keycloak-js";
 
-export function setAccessToken(token) {
-  accessToken = token;
-}
+const keycloak = new Keycloak({
+  url: import.meta.env.VITE_KEYCLOAK_URL || "http://localhost:8081",
+  realm: import.meta.env.VITE_KEYCLOAK_REALM || "vaultcore",
+  clientId: import.meta.env.VITE_KEYCLOAK_CLIENT_ID || "vaultcore-frontend"
+});
+
+let accessToken = null;
 
 export function getAccessToken() {
   return accessToken;
 }
 
-export async function login(username, password) {
-  const res = await fetch("/auth/login", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    credentials: "include",
-    body: JSON.stringify({ username, password })
+export async function initAuth() {
+  const authenticated = await keycloak.init({
+    pkceMethod: "S256",
+    onLoad: "check-sso",
+    silentCheckSsoRedirectUri: window.location.origin + "/silent-check-sso.html"
   });
 
-  if (!res.ok) throw new Error("Invalid credentials");
-  const data = await res.json();
-  setAccessToken(data.accessToken);
-  return data;
+  accessToken = keycloak.token || null;
+  return authenticated;
+}
+
+export async function login() {
+  await keycloak.login();
+}
+
+export async function logout() {
+  await keycloak.logout({ redirectUri: window.location.origin });
+}
+
+export function isAuthenticated() {
+  return !!keycloak.authenticated;
 }
 
 export async function refreshToken() {
-  const res = await fetch("/auth/refresh", {
-    method: "POST",
-    credentials: "include"
-  });
-  if (!res.ok) throw new Error("Refresh failed");
-  const data = await res.json();
-  setAccessToken(data.accessToken);
-  return data;
+  if (!keycloak.token) return;
+  const refreshed = await keycloak.updateToken(30);
+  if (refreshed) {
+    accessToken = keycloak.token;
+  }
 }
 
-export async function bootstrapAuth() {
-  try {
-    await refreshToken();
-    return true;
-  } catch {
-    return false;
-  }
+export function getKeycloak() {
+  return keycloak;
 }
