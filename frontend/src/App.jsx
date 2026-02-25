@@ -14,7 +14,7 @@ function App() {
 
     const interval = setInterval(() => {
       refreshToken().catch(() => {});
-    }, 10000);
+    }, 60000);
 
     return () => clearInterval(interval);
   }, []);
