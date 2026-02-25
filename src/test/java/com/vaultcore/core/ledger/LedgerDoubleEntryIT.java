@@ -4,19 +4,25 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
+import com.vaultcore.config.IntegrationTestBase;
+import com.vaultcore.security.TestSecurityConfig;
+import org.springframework.context.annotation.Import;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @SpringBootTest
-class LedgerDoubleEntryIT {
+@Import(TestSecurityConfig.class)
+class LedgerDoubleEntryIT extends IntegrationTestBase {
 
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
     @Test
+    @Transactional
     void singleEntryShouldFail() {
         UUID txnId = UUID.randomUUID();
         UUID accountId = UUID.randomUUID();
@@ -32,6 +38,7 @@ class LedgerDoubleEntryIT {
     }
 
     @Test
+    @Transactional
     void mismatchShouldFail() {
         UUID txnId = UUID.randomUUID();
         UUID accountId1 = UUID.randomUUID();
@@ -53,6 +60,7 @@ class LedgerDoubleEntryIT {
     }
 
     @Test
+    @Transactional
     void validDoubleEntrySucceeds() {
         UUID txnId = UUID.randomUUID();
         UUID accountId1 = UUID.randomUUID();
