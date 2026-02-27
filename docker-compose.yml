@@ -55,8 +55,8 @@ services:
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
       SPRING_JPA_HIBERNATE_DDL_AUTO: validate
       SPRING_FLYWAY_ENABLED: "true"
-      OAUTH2_ISSUER_URI: http://localhost:8081/realms/vaultcore
-      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://localhost:8081/realms/vaultcore
+      OAUTH2_ISSUER_URI: http://keycloak:8080/realms/vaultcore
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://keycloak:8080/realms/vaultcore
       SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI: http://keycloak:8080/realms/vaultcore/protocol/openid-connect/certs
     depends_on:
       db:
