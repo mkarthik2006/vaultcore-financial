@@ -6,8 +6,11 @@ services:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_HOST_AUTH_METHOD: md5
+      POSTGRES_INITDB_ARGS: "--auth-local=md5 --auth-host=md5"
     volumes:
       - vaultcore_pgdata:/var/lib/postgresql/data
+      - ./docker/db/init:/docker-entrypoint-initdb.d:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 10s
@@ -18,7 +21,7 @@ services:
   keycloak:
     image: quay.io/keycloak/keycloak:24.0.5
     container_name: vaultcore-keycloak
-    command: ["start-dev", "--import-realm"]
+    command: ["start", "--import-realm"]
     volumes:
       - ./docker/keycloak/realm-import:/opt/keycloak/data/import:ro
     environment:
@@ -27,7 +30,7 @@ services:
 
       KC_DB: postgres
       KC_DB_URL_HOST: db
-      KC_DB_URL_DATABASE: ${POSTGRES_DB}
+      KC_DB_URL_DATABASE: keycloak_db
       KC_DB_USERNAME: ${POSTGRES_USER}
       KC_DB_PASSWORD: ${POSTGRES_PASSWORD}
 
