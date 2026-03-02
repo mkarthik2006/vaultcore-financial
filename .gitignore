@@ -39,3 +39,4 @@ build/
 # Environment variables
 .env
 .DS_Store
+docker/db/
