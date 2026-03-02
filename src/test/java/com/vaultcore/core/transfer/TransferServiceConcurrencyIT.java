@@ -78,29 +78,28 @@ class TransferServiceConcurrencyIT extends IntegrationTestBase {
         assertEquals(0, INITIAL_FUNDING.compareTo(senderBefore));
 
         // Act: run 100 parallel transfers A001 -> A002
-        ExecutorService executor = Executors.newFixedThreadPool(THREADS);
-        List<Callable<Void>> tasks = new ArrayList<>();
+        try (ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor()) {
+            List<Callable<Void>> tasks = new ArrayList<>();
 
-        for (int i = 0; i < THREADS; i++) {
-            tasks.add(() -> {
-                TransferRequestDTO req = new TransferRequestDTO(
-                    SENDER_ACCOUNT_NO,
-                    RECEIVER_ACCOUNT_NO,
-                    AMOUNT_PER_TRANSFER,
-                    CURRENCY
-                );
-                transferService.transfer(req);
-                return null;
-            });
-        }
+            for (int i = 0; i < THREADS; i++) {
+                tasks.add(() -> {
+                    TransferRequestDTO req = new TransferRequestDTO(
+                        SENDER_ACCOUNT_NO,
+                        RECEIVER_ACCOUNT_NO,
+                        AMOUNT_PER_TRANSFER,
+                        CURRENCY
+                    );
+                    transferService.transfer(req);
+                    return null;
+                });
+            }
 
-        List<Future<Void>> futures = executor.invokeAll(tasks, 60, TimeUnit.SECONDS);
-        executor.shutdown();
-        executor.awaitTermination(60, TimeUnit.SECONDS);
+            List<Future<Void>> futures = executor.invokeAll(tasks, 60, TimeUnit.SECONDS);
 
-        // Ensure no task failed silently
-        for (Future<Void> f : futures) {
-            f.get(); // will throw if the task failed
+            // Ensure no task failed silently
+            for (Future<Void> f : futures) {
+                f.get(); // will throw if the task failed
+            }
         }
 
         // Assert: final balances
