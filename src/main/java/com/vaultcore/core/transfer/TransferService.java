@@ -54,8 +54,9 @@ public class TransferService {
         validateRequest(request);
 
         return retryableTransferExecutor.executeWithRetry(() -> {
-            transactionTemplate.setIsolationLevel(Isolation.SERIALIZABLE.value());
-            return transactionTemplate.execute(status -> doTransferInSerializableTx(request));
+            TransactionTemplate tx = new TransactionTemplate(transactionTemplate.getTransactionManager());
+            tx.setIsolationLevel(Isolation.SERIALIZABLE.value());
+            return tx.execute(status -> doTransferInSerializableTx(request));
         });
     }
 
