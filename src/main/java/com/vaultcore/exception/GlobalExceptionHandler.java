@@ -1,5 +1,6 @@
 package com.vaultcore.exception;
 
+import com.vaultcore.core.fraud.FraudChallengeRequiredException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
@@ -29,6 +30,15 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of(
             "error", "invalid_request",
             "message", ex.getMessage()
+        ));
+    }
+
+    @ExceptionHandler(FraudChallengeRequiredException.class)
+    public ResponseEntity<?> handleFraudChallenge(FraudChallengeRequiredException ex) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of(
+            "error", "fraud_challenge_required",
+            "message", ex.getMessage(),
+            "channel", ex.getChannel()
         ));
     }
 }
