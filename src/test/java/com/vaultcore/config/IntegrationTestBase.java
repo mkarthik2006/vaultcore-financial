@@ -1,10 +1,12 @@
 package com.vaultcore.config;
 
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+@ActiveProfiles("test")
 @Testcontainers
 public abstract class IntegrationTestBase {
 
@@ -25,5 +27,9 @@ public abstract class IntegrationTestBase {
         registry.add("spring.datasource.password", POSTGRES::getPassword);
         registry.add("spring.jpa.hibernate.ddl-auto", () -> "validate");
         registry.add("spring.flyway.enabled", () -> "true");
+        registry.add("spring.cache.type", () -> "none");
+        registry.add("spring.autoconfigure.exclude", () ->
+            "org.redisson.spring.starter.RedissonAutoConfigurationV2"
+        );
     }
 }
