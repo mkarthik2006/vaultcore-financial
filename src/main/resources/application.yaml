@@ -24,7 +24,7 @@ spring:
           region:
             factory_class: org.redisson.hibernate.RedissonRegionFactory
           redisson:
-            config: classpath:redisson.yaml   # ✅ fixed indentation
+            config: classpath:redisson.yaml
     open-in-view: false
 
   flyway:
@@ -38,6 +38,8 @@ spring:
     redis:
       host: ${SPRING_REDIS_HOST:redis}
       port: ${SPRING_REDIS_PORT:6379}
+      repositories:
+        enabled: false
 
   security:
     oauth2:

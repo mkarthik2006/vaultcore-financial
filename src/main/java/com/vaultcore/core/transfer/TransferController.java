@@ -1,5 +1,6 @@
 package com.vaultcore.core.transfer;
 
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,13 +17,10 @@ public class TransferController {
     }
 
     @PostMapping
-    public ResponseEntity<TransferResponseDTO> transfer(@RequestBody TransferRequestDTO request) {
+    public ResponseEntity<TransferResponseDTO> transfer(@Valid @RequestBody TransferRequestDTO request) {
         TransferResponseDTO response = transferService.transfer(request);
 
-        // We don’t yet have a GET endpoint for the resource, but 201 is required by you.
-        // So we return a best-effort Location that points to the transfer collection + ledgerTransactionId.
         URI location = URI.create("/api/v1/transfers/" + response.ledgerTransactionId());
-
         return ResponseEntity.created(location).body(response);
     }
 }
