@@ -1,3 +1,6 @@
+import { Link } from "react-router-dom";
+
+
 export default function Dashboard() {
   return (
     <main style={{
@@ -15,6 +18,9 @@ export default function Dashboard() {
         fontSize: "1.15rem",
         marginBottom: 8
       }}>✅ Login successful.</p>
+       <p>
+        <Link to="/portfolio">View Portfolio</Link>
+      </p>
       <hr style={{ margin: "2rem 0", borderColor: "#e5e7eb" }} />
       <section>
         <p style={{ fontSize: "1rem", color: "#334155" }}>
