@@ -45,7 +45,7 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: ${OAUTH2_ISSUER_URI:http://localhost:8081/realms/vaultcore}
+          issuer-uri: ${OAUTH2_ISSUER_URI:http://localhost:8082/realms/vaultcore}
           jwk-set-uri: ${OAUTH2_JWK_SET_URI:http://keycloak:8080/realms/vaultcore/protocol/openid-connect/certs}
   threads:
     virtual:
@@ -63,6 +63,11 @@ app:
     threshold: 10000
     challenge-enabled: true
     challenge-channel: "mock-sms"
+  stock:
+    api:
+      base-url: ${STOCK_API_BASE_URL:http://stock-mock-api:8080/api}
+      cache-ttl-ms: ${STOCK_API_CACHE_TTL_MS:2000}
+      timeout-ms: ${STOCK_API_TIMEOUT_MS:250}
 
 management:
   endpoints:

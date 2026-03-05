@@ -37,8 +37,8 @@ services:
 
       KC_HTTP_ENABLED: "true"
       KC_HOSTNAME_STRICT: "false"
-      KC_HOSTNAME_URL: "http://localhost:8081"
-      KC_HOSTNAME_ADMIN_URL: "http://localhost:8081"
+      KC_HOSTNAME_URL: "http://localhost:8082"
+      KC_HOSTNAME_ADMIN_URL: "http://localhost:8082"
       KC_PROXY_HEADERS: "xforwarded"
     depends_on:
       db:
@@ -52,6 +52,13 @@ services:
       - "6379:6379"
     restart: unless-stopped
 
+  stock-mock-api:
+    container_name: vaultcore-stock-mock
+    build: ./docker/mock-stock-api
+    ports:
+      - "8081:8080"
+    restart: unless-stopped
+
   backend:
     build: .
     container_name: vaultcore-app
@@ -63,7 +70,7 @@ services:
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
       SPRING_JPA_HIBERNATE_DDL_AUTO: validate
       SPRING_FLYWAY_ENABLED: "true"
-      OAUTH2_ISSUER_URI: ${OAUTH2_ISSUER_URI}
+      OAUTH2_ISSUER_URI: http://localhost:8082/realms/vaultcore
       OAUTH2_JWK_SET_URI: http://keycloak:8080/realms/vaultcore/protocol/openid-connect/certs
       SPRING_REDIS_HOST: ${SPRING_REDIS_HOST}
       SPRING_REDIS_PORT: ${SPRING_REDIS_PORT}
@@ -74,6 +81,8 @@ services:
       keycloak:
         condition: service_started
       redis:
+        condition: service_started
+      stock-mock-api:
         condition: service_started
     restart: unless-stopped
 
@@ -90,7 +99,7 @@ services:
     image: nginx:1.27-alpine
     container_name: vaultcore-gateway
     ports:
-      - "8081:80"
+      - "8082:80"
     volumes:
       - ./docker/gateway/default.conf:/etc/nginx/conf.d/default.conf
     depends_on:

@@ -1,5 +1,6 @@
 package com.vaultcore.config;
 
+import org.junit.jupiter.api.AfterAll;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
@@ -8,6 +9,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 @ActiveProfiles("test")
 @Testcontainers
+@SuppressWarnings("resource")
 public abstract class IntegrationTestBase {
 
     static final PostgreSQLContainer<?> POSTGRES =
@@ -18,6 +20,11 @@ public abstract class IntegrationTestBase {
 
     static {
         POSTGRES.start();
+    }
+
+    @AfterAll
+    static void stopContainer() {
+        POSTGRES.stop();
     }
 
     @DynamicPropertySource
