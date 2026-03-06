@@ -2,14 +2,18 @@ package com.vaultcore.core.transfer;
 
 import com.vaultcore.core.account.Account;
 import com.vaultcore.core.account.AccountRepository;
+import com.vaultcore.core.fraud.FraudDetectionService;
 import com.vaultcore.core.ledger.LedgerEntry;
 import com.vaultcore.core.ledger.LedgerRepository;
 import com.vaultcore.core.ledger.LedgerService;
 import com.vaultcore.core.transaction.TransactionReference;
 import com.vaultcore.core.transaction.TransactionReferenceRepository;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
-import org.springframework.transaction.support.TransactionTemplate;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -22,22 +26,24 @@ public class TransferService {
     private final TransactionReferenceRepository transactionReferenceRepository;
     private final LedgerRepository ledgerRepository;
     private final LedgerService ledgerService;
-
-    private final TransactionTemplate transactionTemplate;
     private final RetryableTransferExecutor retryableTransferExecutor;
+    private final FraudDetectionService fraudDetectionService;
+    private final TransferService self;
 
     public TransferService(AccountRepository accountRepository,
                            TransactionReferenceRepository transactionReferenceRepository,
                            LedgerRepository ledgerRepository,
                            LedgerService ledgerService,
-                           TransactionTemplate transactionTemplate,
-                           RetryableTransferExecutor retryableTransferExecutor) {
+                           RetryableTransferExecutor retryableTransferExecutor,
+                           FraudDetectionService fraudDetectionService,
+                           @Lazy TransferService self) {
         this.accountRepository = accountRepository;
         this.transactionReferenceRepository = transactionReferenceRepository;
         this.ledgerRepository = ledgerRepository;
         this.ledgerService = ledgerService;
-        this.transactionTemplate = transactionTemplate;
         this.retryableTransferExecutor = retryableTransferExecutor;
+        this.fraudDetectionService = fraudDetectionService;
+        this.self = self;
     }
 
     /**
@@ -52,12 +58,15 @@ public class TransferService {
      */
     public TransferResponseDTO transfer(TransferRequestDTO request) {
         validateRequest(request);
+        fraudDetectionService.assertTransferAllowed(request);
 
-        return retryableTransferExecutor.executeWithRetry(() -> {
-            TransactionTemplate tx = new TransactionTemplate(transactionTemplate.getTransactionManager());
-            tx.setIsolationLevel(Isolation.SERIALIZABLE.value());
-            return tx.execute(status -> doTransferInSerializableTx(request));
-        });
+        return retryableTransferExecutor.executeWithRetry(() -> self.transferInSerializableTx(request));
+    }
+
+    @CacheEvict(cacheNames = "balances", allEntries = true)
+    @Transactional(isolation = Isolation.SERIALIZABLE, propagation = Propagation.REQUIRES_NEW)
+    public TransferResponseDTO transferInSerializableTx(TransferRequestDTO request) {
+        return doTransferInSerializableTx(request);
     }
 
     private TransferResponseDTO doTransferInSerializableTx(TransferRequestDTO request) {

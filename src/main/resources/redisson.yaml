@@ -1,0 +1,4 @@
+singleServerConfig:
+  address: "redis://${SPRING_REDIS_HOST}:${SPRING_REDIS_PORT}"
+threads: 4
+nettyThreads: 4

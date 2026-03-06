@@ -18,17 +18,35 @@ spring:
           batch_size: 50
         order_inserts: true
         order_updates: true
+        cache:
+          use_second_level_cache: true
+          use_query_cache: true
+          region:
+            factory_class: org.redisson.hibernate.RedissonRegionFactory
+          redisson:
+            config: classpath:redisson.yaml
     open-in-view: false
 
   flyway:
     enabled: true
     locations: classpath:db/migration
 
+  cache:
+    type: redis
+
+  data:
+    redis:
+      host: ${SPRING_REDIS_HOST:redis}
+      port: ${SPRING_REDIS_PORT:6379}
+      repositories:
+        enabled: false
+
   security:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: ${OAUTH2_ISSUER_URI:http://keycloak:8080/realms/vaultcore}
+          issuer-uri: ${OAUTH2_ISSUER_URI:http://localhost:8082/realms/vaultcore}
+          jwk-set-uri: ${OAUTH2_JWK_SET_URI:http://keycloak:8080/realms/vaultcore/protocol/openid-connect/certs}
   threads:
     virtual:
       enabled: true
@@ -40,11 +58,16 @@ logging:
   level:
     org.springframework.security: INFO
 
-
 app:
   fraud:
     threshold: 10000
- 
+    challenge-enabled: true
+    challenge-channel: "mock-sms"
+  stock:
+    api:
+      base-url: ${STOCK_API_BASE_URL:http://stock-mock-api:8080/api}
+      cache-ttl-ms: ${STOCK_API_CACHE_TTL_MS:2000}
+      timeout-ms: ${STOCK_API_TIMEOUT_MS:250}
 
 management:
   endpoints:

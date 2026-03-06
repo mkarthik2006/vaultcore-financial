@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import LoginPage from "./components/LoginPage";
 import Dashboard from "./components/Dashboard";
 import SendMoney from "./pages/SendMoney";
+import Portfolio from "./pages/Portfolio";
 import { initAuth, isAuthenticated, refreshToken } from "./services/auth";
 
 function App() {
@@ -29,16 +30,40 @@ function App() {
       <Routes>
         <Route
           path="/"
-          element={isAuthenticated() ? <Navigate to="/dashboard" replace /> : <LoginPage />}
+          element={
+            isAuthenticated()
+              ? <Navigate to="/dashboard" replace />
+              : <LoginPage />
+          }
         />
+
         <Route
           path="/dashboard"
-          element={isAuthenticated() ? <Dashboard /> : <Navigate to="/" replace />}
+          element={
+            isAuthenticated()
+              ? <Dashboard />
+              : <Navigate to="/" replace />
+          }
         />
+
         <Route
           path="/send-money"
-          element={isAuthenticated() ? <SendMoney /> : <Navigate to="/" replace />}
+          element={
+            isAuthenticated()
+              ? <SendMoney />
+              : <Navigate to="/" replace />
+          }
         />
+
+        <Route
+          path="/portfolio"
+          element={
+            isAuthenticated()
+              ? <Portfolio />
+              : <Navigate to="/" replace />
+          }
+        />
+
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
