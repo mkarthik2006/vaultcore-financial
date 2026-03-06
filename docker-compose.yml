@@ -1,7 +1,4 @@
-
-
 services:
-
   db:
     image: postgres:15
     container_name: vaultcore-db
@@ -23,17 +20,28 @@ services:
     container_name: vaultcore-keycloak
     command: ["start-dev", "--import-realm"]
     volumes:
-      - ./docker/keycloak/realm-import:/opt/keycloak/data/import
+      - ./docker/keycloak/realm-import:/opt/keycloak/data/import:ro
     environment:
       KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN}
       KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
-      KC_HOSTNAME: keycloak
-      KC_HOSTNAME_PORT: 8080
-      KC_HOSTNAME_STRICT: false
-    ports:
-      - "8081:8080"
+
+      KC_DB: postgres
+      KC_DB_URL_HOST: db
+      KC_DB_URL_DATABASE: ${POSTGRES_DB}
+      KC_DB_USERNAME: ${POSTGRES_USER}
+      KC_DB_PASSWORD: ${POSTGRES_PASSWORD}
+
+      KC_HTTP_ENABLED: "true"
+      KC_HOSTNAME_STRICT: "false"
+      KC_HOSTNAME_URL: "http://localhost:8081"
+
+      # ✅ ADD: forces admin console redirects to include :8081
+      KC_HOSTNAME_ADMIN_URL: "http://localhost:8081"
+
+      KC_PROXY_HEADERS: "xforwarded"
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     restart: unless-stopped
 
   backend:
@@ -48,8 +56,8 @@ services:
       SPRING_JPA_HIBERNATE_DDL_AUTO: validate
       SPRING_FLYWAY_ENABLED: "true"
       OAUTH2_ISSUER_URI: http://keycloak:8080/realms/vaultcore
-    ports:
-      - "8080:8080"
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://keycloak:8080/realms/vaultcore
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI: http://keycloak:8080/realms/vaultcore/protocol/openid-connect/certs
     depends_on:
       db:
         condition: service_healthy
@@ -62,12 +70,22 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
     container_name: vaultcore-frontend
-    ports:
-      - "3000:80"
     depends_on:
       - backend
     restart: unless-stopped
 
+  gateway:
+    image: nginx:1.27-alpine
+    container_name: vaultcore-gateway
+    ports:
+      - "8081:80"
+    volumes:
+      - ./docker/gateway/default.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - frontend
+      - backend
+      - keycloak
+    restart: unless-stopped
 
 volumes:
   vaultcore_pgdata:
