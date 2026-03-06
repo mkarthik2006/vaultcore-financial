@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { addHolding, getPortfolio } from "../services/portfolioApi";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 
 export default function Portfolio() {
   const [portfolio, setPortfolio] = useState(null);
@@ -123,38 +124,17 @@ export default function Portfolio() {
 
       <div>
         <h3>Portfolio Chart</h3>
-        <SimpleBarChart data={chartData} />
+        <div style={{ height: 300 }}>
+          <ResponsiveContainer>
+            <BarChart data={chartData}>
+              <XAxis dataKey="symbol" />
+              <YAxis />
+              <Tooltip />
+              <Bar dataKey="value" fill="#3b82f6" />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
       </div>
     </div>
-  );
-}
-
-function SimpleBarChart({ data }) {
-  const width = 720;
-  const height = 240;
-  const max = Math.max(...data.map(d => d.value), 1);
-  const barWidth = data.length ? width / data.length : width;
-
-  return (
-    <svg width={width} height={height} style={{ border: "1px solid #ccc" }}>
-      {data.map((d, i) => {
-        const barHeight = (d.value / max) * (height - 40);
-        const x = i * barWidth + 10;
-        const y = height - barHeight - 20;
-
-        return (
-          <g key={d.symbol}>
-            <rect
-              x={x}
-              y={y}
-              width={barWidth - 20}
-              height={barHeight}
-              fill="#3b82f6"
-            />
-            <text x={x} y={height - 5} fontSize="12">{d.symbol}</text>
-          </g>
-        );
-      })}
-    </svg>
   );
 }
