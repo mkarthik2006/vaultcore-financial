@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import LoginPage from "./components/LoginPage";
 import Dashboard from "./components/Dashboard";
+import SendMoney from "./pages/SendMoney";
 import { initAuth, isAuthenticated, refreshToken } from "./services/auth";
 
 function App() {
@@ -33,6 +34,10 @@ function App() {
         <Route
           path="/dashboard"
           element={isAuthenticated() ? <Dashboard /> : <Navigate to="/" replace />}
+        />
+        <Route
+          path="/send-money"
+          element={isAuthenticated() ? <SendMoney /> : <Navigate to="/" replace />}
         />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
