@@ -40,10 +40,13 @@ class StockPriceClientTest {
 
         HttpServer server = HttpServer.create(new InetSocketAddress(0), 0);
         server.createContext("/api/price", exchange -> {
-            callCount.incrementAndGet();
-            try {
-                Thread.sleep(300);
-            } catch (InterruptedException ignored) {}
+            int call = callCount.incrementAndGet();
+            // First call: fast to populate cache. Second call: slow to trigger timeout.
+            if (call > 1) {
+                try {
+                    Thread.sleep(300);
+                } catch (InterruptedException ignored) {}
+            }
             String response = "{\"symbol\":\"AAPL\",\"price\":185.32}";
             exchange.getResponseHeaders().add("Content-Type", "application/json");
             exchange.sendResponseHeaders(200, response.length());

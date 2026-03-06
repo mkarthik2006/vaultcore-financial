@@ -90,7 +90,7 @@ class StatementControllerIT extends IntegrationTestBase {
         );
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        assertThat(response.getBody()).contains("invalid_request");
+        assertThat(response.getBody()).contains("User not found: otherUser");
     }
 
     private HttpHeaders authHeaders(String username) {
