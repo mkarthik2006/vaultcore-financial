@@ -4,6 +4,7 @@ import LoginPage from "./components/LoginPage";
 import Dashboard from "./components/Dashboard";
 import SendMoney from "./pages/SendMoney";
 import Portfolio from "./pages/Portfolio";
+import AdminProvisioning from "./pages/AdminProvisioning";
 import { initAuth, isAuthenticated, refreshToken } from "./services/auth";
 
 function App() {
@@ -60,6 +61,15 @@ function App() {
           element={
             isAuthenticated()
               ? <Portfolio />
+              : <Navigate to="/" replace />
+          }
+        />
+
+        <Route
+          path="/admin"
+          element={
+            isAuthenticated()
+              ? <AdminProvisioning />
               : <Navigate to="/" replace />
           }
         />

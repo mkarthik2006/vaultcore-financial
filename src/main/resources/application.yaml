@@ -46,7 +46,6 @@ spring:
       resourceserver:
         jwt:
           issuer-uri: ${OAUTH2_ISSUER_URI:http://localhost:8082/realms/vaultcore}
-          jwk-set-uri: ${OAUTH2_JWK_SET_URI:http://keycloak:8080/realms/vaultcore/protocol/openid-connect/certs}
   threads:
     virtual:
       enabled: true
@@ -68,6 +67,10 @@ app:
       base-url: ${STOCK_API_BASE_URL:http://stock-mock-api:8080/api}
       cache-ttl-ms: ${STOCK_API_CACHE_TTL_MS:2000}
       timeout-ms: ${STOCK_API_TIMEOUT_MS:250}
+  security:
+    jwt:
+      audience: ${OAUTH2_AUDIENCE:}
+      allowed-clock-skew-seconds: ${OAUTH2_ALLOWED_CLOCK_SKEW_SECONDS:60}
 
 management:
   endpoints:
