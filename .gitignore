@@ -41,3 +41,5 @@ build/
 .DS_Store
 architecture.png
 docker-compose-viz
+*.pdf
+run-all-api-tests.sh
