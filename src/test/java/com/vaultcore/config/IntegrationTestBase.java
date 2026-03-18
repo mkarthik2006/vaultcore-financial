@@ -1,6 +1,5 @@
 package com.vaultcore.config;
 
-import org.junit.jupiter.api.AfterAll;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
@@ -22,21 +21,37 @@ public abstract class IntegrationTestBase {
         POSTGRES.start();
     }
 
-    @AfterAll
-    static void stopContainer() {
-        POSTGRES.stop();
-    }
-
     @DynamicPropertySource
     static void registerProps(DynamicPropertyRegistry registry) {
-        registry.add("spring.datasource.url", POSTGRES::getJdbcUrl);
-        registry.add("spring.datasource.username", POSTGRES::getUsername);
-        registry.add("spring.datasource.password", POSTGRES::getPassword);
+        registry.add("spring.datasource.url", IntegrationTestBase::jdbcUrl);
+        registry.add("spring.datasource.username", IntegrationTestBase::dbUser);
+        registry.add("spring.datasource.password", IntegrationTestBase::dbPass);
         registry.add("spring.jpa.hibernate.ddl-auto", () -> "validate");
         registry.add("spring.flyway.enabled", () -> "true");
         registry.add("spring.cache.type", () -> "none");
         registry.add("spring.autoconfigure.exclude", () ->
             "org.redisson.spring.starter.RedissonAutoConfigurationV2"
         );
+    }
+
+    private static synchronized void ensureRunning() {
+        if (!POSTGRES.isRunning()) {
+            POSTGRES.start();
+        }
+    }
+
+    private static String jdbcUrl() {
+        ensureRunning();
+        return POSTGRES.getJdbcUrl();
+    }
+
+    private static String dbUser() {
+        ensureRunning();
+        return POSTGRES.getUsername();
+    }
+
+    private static String dbPass() {
+        ensureRunning();
+        return POSTGRES.getPassword();
     }
 }
