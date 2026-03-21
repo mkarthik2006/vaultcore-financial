@@ -1,6 +1,6 @@
 import { apiFetch } from "./apiClient";
 
-const API_BASE = import.meta.env.VITE_API_BASE ?? "";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8082";
 
 async function handleJson(res) {
   if (!res.ok) {
@@ -17,19 +17,19 @@ async function handleJson(res) {
 }
 
 export async function createUser(payload) {
-  const res = await apiFetch(`${API_BASE}/api/v1/admin/users`, {
+  const res = await apiFetch(`${API_BASE_URL}/api/v1/admin/users`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload)
+    body: JSON.stringify(payload),
   });
   return handleJson(res);
 }
 
 export async function createAccount(payload) {
-  const res = await apiFetch(`${API_BASE}/api/v1/admin/accounts`, {
+  const res = await apiFetch(`${API_BASE_URL}/api/v1/admin/accounts`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload)
+    body: JSON.stringify(payload),
   });
   return handleJson(res);
 }
