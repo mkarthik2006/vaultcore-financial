@@ -1,22 +1,14 @@
 import Keycloak from "keycloak-js";
 
 const keycloak = new Keycloak({
-  url: import.meta.env.VITE_KEYCLOAK_URL || "http://localhost:8081",
+  url: import.meta.env.VITE_KEYCLOAK_URL || "http://localhost:8082/auth",
   realm: import.meta.env.VITE_KEYCLOAK_REALM || "vaultcore",
   clientId: import.meta.env.VITE_KEYCLOAK_CLIENT_ID || "vaultcore-frontend",
 });
 
 let accessToken = null;
 
-/**
- * Compliance:
- * - Token is sourced from Keycloak session in-memory (no localStorage/sessionStorage).
- * - Caller should only use when authenticated.
- */
 export function getAccessToken() {
-  if (!keycloak.authenticated || !accessToken) {
-    throw new Error("Not authenticated (no access token available).");
-  }
   return accessToken;
 }
 
@@ -44,13 +36,14 @@ export function isAuthenticated() {
 }
 
 export async function refreshToken() {
-  if (!keycloak.token) return;
-  const refreshed = await keycloak.updateToken(30);
-  if (refreshed) {
-    accessToken = keycloak.token;
-  } else {
-    // even if not refreshed, token may still be valid; keep it in sync anyway
-    accessToken = keycloak.token;
+  if (!keycloak.authenticated) return false;
+  try {
+    await keycloak.updateToken(30);
+    accessToken = keycloak.token || null;
+    return true;
+  } catch {
+    accessToken = null;
+    return false;
   }
 }
 
