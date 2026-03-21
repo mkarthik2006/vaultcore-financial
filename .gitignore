@@ -1,10 +1,13 @@
 HELP.md
+
+# Maven / Build
 target/
-.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
 
-### STS ###
+.mvn/wrapper/maven-wrapper.jar
+
+# STS
 .apt_generated
 .classpath
 .factorypath
@@ -13,13 +16,13 @@ target/
 .springBeans
 .sts4-cache
 
-### IntelliJ IDEA ###
+# IntelliJ IDEA
 .idea
 *.iws
 *.iml
 *.ipr
 
-### NetBeans ###
+# NetBeans
 /nbproject/private/
 /nbbuild/
 /dist/
@@ -29,17 +32,20 @@ build/
 !**/src/main/**/build/
 !**/src/test/**/build/
 
-### VS Code ###
+# VS Code
 .vscode/
-/target
-/frontend/node_modules
-/target
+
+# Frontend
 /frontend/node_modules
 
-# Environment variables
+# Environment & OS
 .env
 .DS_Store
+
+# Assets
 architecture.png
-docker-compose-viz
 *.pdf
+
+# Local / Utility Files
+docker-compose-viz
 run-all-api-tests.sh
