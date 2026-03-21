@@ -36,7 +36,7 @@ spring:
 
   data:
     redis:
-      host: ${SPRING_REDIS_HOST:redis}
+      host: ${SPRING_REDIS_HOST:vaultcore-redis}
       port: ${SPRING_REDIS_PORT:6379}
       repositories:
         enabled: false
@@ -45,7 +45,8 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: ${OAUTH2_ISSUER_URI:http://localhost:8082/realms/vaultcore}
+          issuer-uri: ${OAUTH2_ISSUER_URI:http://vaultcore-keycloak:8080/realms/vaultcore}
+
   threads:
     virtual:
       enabled: true
@@ -62,11 +63,13 @@ app:
     threshold: 10000
     challenge-enabled: true
     challenge-channel: "mock-sms"
+
   stock:
     api:
-      base-url: ${STOCK_API_BASE_URL:http://stock-mock-api:8080/api}
+      base-url: ${STOCK_API_BASE_URL:http://vaultcore-stock-mock:8080/api}
       cache-ttl-ms: ${STOCK_API_CACHE_TTL_MS:2000}
       timeout-ms: ${STOCK_API_TIMEOUT_MS:250}
+
   security:
     jwt:
       audience: ${OAUTH2_AUDIENCE:}
