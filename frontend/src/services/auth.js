@@ -35,6 +35,18 @@ export function isAuthenticated() {
   return !!keycloak.authenticated;
 }
 
+export function getRoles() {
+  return keycloak.tokenParsed?.realm_access?.roles ?? [];
+}
+
+export function hasRole(role) {
+  return getRoles().includes(role);
+}
+
+export function isAdmin() {
+  return hasRole("ADMIN");
+}
+
 export async function refreshToken() {
   if (!keycloak.authenticated) return false;
   try {

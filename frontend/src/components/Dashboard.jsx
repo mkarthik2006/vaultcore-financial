@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { isAdmin } from "../services/auth";
 
 
 export default function Dashboard() {
@@ -24,9 +25,11 @@ export default function Dashboard() {
       <p>
         <Link to="/send-money">Send Money</Link>
       </p>
-      <p>
-        <Link to="/admin">Admin Provisioning</Link>
-      </p>
+      {isAdmin() && (
+        <p>
+          <Link to="/admin">Admin Provisioning</Link>
+        </p>
+      )}
       <hr style={{ margin: "2rem 0", borderColor: "#e5e7eb" }} />
       <section>
         <p style={{ fontSize: "1rem", color: "#334155" }}>

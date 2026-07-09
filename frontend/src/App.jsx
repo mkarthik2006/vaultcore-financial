@@ -5,7 +5,7 @@ import Dashboard from "./components/Dashboard";
 import SendMoney from "./pages/SendMoney";
 import Portfolio from "./pages/Portfolio";
 import AdminProvisioning from "./pages/AdminProvisioning";
-import { initAuth, isAuthenticated, refreshToken } from "./services/auth";
+import { initAuth, isAuthenticated, isAdmin, refreshToken } from "./services/auth";
 
 function App() {
   const [ready, setReady] = useState(false);
@@ -68,9 +68,11 @@ function App() {
         <Route
           path="/admin"
           element={
-            isAuthenticated()
-              ? <AdminProvisioning />
-              : <Navigate to="/" replace />
+            !isAuthenticated()
+              ? <Navigate to="/" replace />
+              : isAdmin()
+                ? <AdminProvisioning />
+                : <Navigate to="/dashboard" replace />
           }
         />
 
