@@ -6,10 +6,15 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import SendMoney from "./pages/SendMoney";
 import Portfolio from "./pages/Portfolio";
 import AdminProvisioning from "./pages/AdminProvisioning";
-import { initAuth, isAuthenticated, isAdmin, refreshToken } from "./services/auth";
+import { initAuth, refreshToken } from "./services/auth";
+import { useAuthStore, selectIsAuthenticated, selectIsAdmin } from "./store/authStore";
 
 function App() {
   const [ready, setReady] = useState(false);
+
+  // Reactive auth state from the Zustand store (populated by services/auth.js).
+  const authenticated = useAuthStore(selectIsAuthenticated);
+  const admin = useAuthStore(selectIsAdmin);
 
   useEffect(() => {
     initAuth()
@@ -29,58 +34,42 @@ function App() {
 
   return (
     <ErrorBoundary>
-    <BrowserRouter>
-      <Routes>
-        <Route
-          path="/"
-          element={
-            isAuthenticated()
-              ? <Navigate to="/dashboard" replace />
-              : <LoginPage />
-          }
-        />
+      <BrowserRouter>
+        <Routes>
+          <Route
+            path="/"
+            element={authenticated ? <Navigate to="/dashboard" replace /> : <LoginPage />}
+          />
 
-        <Route
-          path="/dashboard"
-          element={
-            isAuthenticated()
-              ? <Dashboard />
-              : <Navigate to="/" replace />
-          }
-        />
+          <Route
+            path="/dashboard"
+            element={authenticated ? <Dashboard /> : <Navigate to="/" replace />}
+          />
 
-        <Route
-          path="/send-money"
-          element={
-            isAuthenticated()
-              ? <SendMoney />
-              : <Navigate to="/" replace />
-          }
-        />
+          <Route
+            path="/send-money"
+            element={authenticated ? <SendMoney /> : <Navigate to="/" replace />}
+          />
 
-        <Route
-          path="/portfolio"
-          element={
-            isAuthenticated()
-              ? <Portfolio />
-              : <Navigate to="/" replace />
-          }
-        />
+          <Route
+            path="/portfolio"
+            element={authenticated ? <Portfolio /> : <Navigate to="/" replace />}
+          />
 
-        <Route
-          path="/admin"
-          element={
-            !isAuthenticated()
-              ? <Navigate to="/" replace />
-              : isAdmin()
-                ? <AdminProvisioning />
-                : <Navigate to="/dashboard" replace />
-          }
-        />
+          <Route
+            path="/admin"
+            element={
+              !authenticated
+                ? <Navigate to="/" replace />
+                : admin
+                  ? <AdminProvisioning />
+                  : <Navigate to="/dashboard" replace />
+            }
+          />
 
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </BrowserRouter>
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </BrowserRouter>
     </ErrorBoundary>
   );
 }

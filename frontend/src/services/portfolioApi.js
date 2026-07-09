@@ -8,8 +8,8 @@ async function handleJson(res) {
     try {
       const payload = await res.json();
       message = payload.message || payload.error || message;
-    } catch (e) {
-      // ignore
+    } catch {
+      // response body was not JSON; keep the default message
     }
     throw new Error(message);
   }

@@ -28,8 +28,11 @@ import java.time.Duration;
 import java.util.*;
 
 @Configuration
-@Profile("!test") 
 public class SecurityConfig {
+    // The security FILTER CHAIN is active in all profiles so tests exercise the real production
+    // authorization semantics (stateless, CSRF-disabled bearer API, ownership/role rules). Only the
+    // real Keycloak-backed JwtDecoder is profile-gated (see jwtDecoder() below); tests supply a mock
+    // decoder via TestSecurityConfig.
 
     private final RestAuthenticationEntryPoint entryPoint;
 
@@ -97,6 +100,7 @@ public class SecurityConfig {
     }
 
     @Bean
+    @Profile("!test")
     public JwtDecoder jwtDecoder() {
         NimbusJwtDecoder decoder = (NimbusJwtDecoder) JwtDecoders.fromIssuerLocation(issuer);
 

@@ -1,4 +1,5 @@
 import Keycloak from "keycloak-js";
+import { useAuthStore } from "../store/authStore";
 
 const keycloak = new Keycloak({
   url: import.meta.env.VITE_KEYCLOAK_URL || "http://localhost:8082/auth",
@@ -7,6 +8,15 @@ const keycloak = new Keycloak({
 });
 
 let accessToken = null;
+
+/** Pushes the current Keycloak session into the Zustand auth store. */
+function syncAuthStore() {
+  useAuthStore.getState().setAuth({
+    authenticated: !!keycloak.authenticated,
+    roles: keycloak.tokenParsed?.realm_access?.roles ?? [],
+    username: keycloak.tokenParsed?.preferred_username ?? null,
+  });
+}
 
 export function getAccessToken() {
   return accessToken;
@@ -20,6 +30,7 @@ export async function initAuth() {
   });
 
   accessToken = keycloak.token || null;
+  syncAuthStore();
   return authenticated;
 }
 
@@ -28,6 +39,7 @@ export async function login() {
 }
 
 export async function logout() {
+  useAuthStore.getState().clearAuth();
   await keycloak.logout({ redirectUri: window.location.origin });
 }
 
@@ -52,9 +64,11 @@ export async function refreshToken() {
   try {
     await keycloak.updateToken(30);
     accessToken = keycloak.token || null;
+    syncAuthStore();
     return true;
   } catch {
     accessToken = null;
+    useAuthStore.getState().clearAuth();
     return false;
   }
 }

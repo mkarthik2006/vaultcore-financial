@@ -1,8 +1,9 @@
 import { Link } from "react-router-dom";
-import { isAdmin } from "../services/auth";
+import { useAuthStore, selectIsAdmin } from "../store/authStore";
 
 
 export default function Dashboard() {
+  const admin = useAuthStore(selectIsAdmin);
   return (
     <main style={{
       maxWidth: 720,
@@ -25,7 +26,7 @@ export default function Dashboard() {
       <p>
         <Link to="/send-money">Send Money</Link>
       </p>
-      {isAdmin() && (
+      {admin && (
         <p>
           <Link to="/admin">Admin Provisioning</Link>
         </p>
