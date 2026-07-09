@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import LoginPage from "./components/LoginPage";
 import Dashboard from "./components/Dashboard";
+import ErrorBoundary from "./components/ErrorBoundary";
 import SendMoney from "./pages/SendMoney";
 import Portfolio from "./pages/Portfolio";
 import AdminProvisioning from "./pages/AdminProvisioning";
@@ -27,6 +28,7 @@ function App() {
   }
 
   return (
+    <ErrorBoundary>
     <BrowserRouter>
       <Routes>
         <Route
@@ -79,6 +81,7 @@ function App() {
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
+    </ErrorBoundary>
   );
 }
 

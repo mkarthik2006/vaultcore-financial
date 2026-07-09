@@ -1,5 +1,6 @@
 package com.vaultcore.core.fraud;
 
+import com.vaultcore.audit.AuditEventService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -17,15 +18,19 @@ import java.util.UUID;
 public class FraudChallengeController {
 
     private final FraudChallengeService challengeService;
+    private final AuditEventService auditEventService;
 
-    public FraudChallengeController(FraudChallengeService challengeService) {
+    public FraudChallengeController(FraudChallengeService challengeService,
+                                    AuditEventService auditEventService) {
         this.challengeService = challengeService;
+        this.auditEventService = auditEventService;
     }
 
     @PostMapping("/{challengeId}/verify")
     public ResponseEntity<?> verify(@PathVariable UUID challengeId,
                                     @Valid @RequestBody VerifyChallengeRequest request) {
         challengeService.verify(challengeId, request.code());
+        auditEventService.record("FRAUD_CHALLENGE_VERIFIED", null, "challengeId=" + challengeId);
         return ResponseEntity.ok(Map.of(
             "challengeId", challengeId.toString(),
             "status", "VERIFIED",
