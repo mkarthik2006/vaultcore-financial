@@ -2,7 +2,6 @@ package com.vaultcore.core.transfer;
 
 import com.vaultcore.core.account.Account;
 import com.vaultcore.core.account.AccountRepository;
-import com.vaultcore.core.fraud.FraudDetectionService;
 import com.vaultcore.core.ledger.LedgerEntry;
 import com.vaultcore.core.ledger.LedgerRepository;
 import com.vaultcore.core.ledger.LedgerService;
@@ -10,12 +9,17 @@ import com.vaultcore.core.transaction.TransactionReference;
 import com.vaultcore.core.transaction.TransactionReferenceRepository;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.HexFormat;
 import java.util.List;
 import java.util.UUID;
 
@@ -27,7 +31,8 @@ public class TransferService {
     private final LedgerRepository ledgerRepository;
     private final LedgerService ledgerService;
     private final RetryableTransferExecutor retryableTransferExecutor;
-    private final FraudDetectionService fraudDetectionService;
+    private final IdempotencyService idempotencyService;
+    private final IdempotencyRecordRepository idempotencyRecordRepository;
     private final TransferService self;
 
     public TransferService(AccountRepository accountRepository,
@@ -35,14 +40,16 @@ public class TransferService {
                            LedgerRepository ledgerRepository,
                            LedgerService ledgerService,
                            RetryableTransferExecutor retryableTransferExecutor,
-                           FraudDetectionService fraudDetectionService,
+                           IdempotencyService idempotencyService,
+                           IdempotencyRecordRepository idempotencyRecordRepository,
                            @Lazy TransferService self) {
         this.accountRepository = accountRepository;
         this.transactionReferenceRepository = transactionReferenceRepository;
         this.ledgerRepository = ledgerRepository;
         this.ledgerService = ledgerService;
         this.retryableTransferExecutor = retryableTransferExecutor;
-        this.fraudDetectionService = fraudDetectionService;
+        this.idempotencyService = idempotencyService;
+        this.idempotencyRecordRepository = idempotencyRecordRepository;
         this.self = self;
     }
 
@@ -56,11 +63,89 @@ public class TransferService {
      * Postgres SERIALIZABLE can abort with SQLSTATE 40001 (often wrapped by Spring).
      * Correct handling is retry in a brand-new transaction.
      */
+    /**
+     * Execution primitive for a single transfer. Fraud detection is applied here by
+     * {@code FraudDetectionAspect} (AOP {@code @Before} on this exact join point), so it runs once
+     * per real execution and is not repeated across serialization retries or idempotent replays.
+     */
     public TransferResponseDTO transfer(TransferRequestDTO request) {
         validateRequest(request);
-        fraudDetectionService.assertTransferAllowed(request);
-
         return retryableTransferExecutor.executeWithRetry(() -> self.transferInSerializableTx(request));
+    }
+
+    /**
+     * Idempotent entry point. When an {@code idempotencyKey} is supplied, at most one transfer is
+     * executed per key regardless of how many times the request is (re)submitted; repeats replay the
+     * original result. The key is reserved via a UNIQUE constraint <em>before</em> execution so two
+     * concurrent duplicates cannot both post — the loser observes the winner's reservation.
+     *
+     * @throws IdempotencyConflictException if the key is reused with a different payload, or an
+     *                                       earlier request with the same key is still in progress
+     */
+    public TransferResponseDTO transfer(TransferRequestDTO request, String idempotencyKey) {
+        if (idempotencyKey == null || idempotencyKey.isBlank()) {
+            // No key supplied: execute via the proxy so the fraud aspect still applies.
+            return self.transfer(request);
+        }
+
+        String fingerprint = fingerprint(request);
+
+        var existing = idempotencyRecordRepository.findByIdempotencyKey(idempotencyKey);
+        if (existing.isPresent()) {
+            return resolveExisting(existing.get(), fingerprint);
+        }
+
+        try {
+            idempotencyService.reserve(idempotencyKey, fingerprint);
+        } catch (DataIntegrityViolationException concurrentDuplicate) {
+            // A concurrent request won the reservation race; defer to its outcome.
+            IdempotencyRecord record = idempotencyRecordRepository.findByIdempotencyKey(idempotencyKey)
+                .orElseThrow(() -> new IdempotencyConflictException(
+                    "Idempotency-Key is being processed by a concurrent request"));
+            return resolveExisting(record, fingerprint);
+        }
+
+        // We own execution for this key. Route through the proxy so fraud detection applies; if it
+        // (or anything else) fails before completion, release the reservation so the caller can
+        // legitimately retry — e.g. after satisfying a fraud challenge.
+        TransferResponseDTO response;
+        try {
+            response = self.transfer(request);
+        } catch (RuntimeException ex) {
+            idempotencyService.release(idempotencyKey);
+            throw ex;
+        }
+        idempotencyService.complete(idempotencyKey, response);
+        return response;
+    }
+
+    private TransferResponseDTO resolveExisting(IdempotencyRecord record, String fingerprint) {
+        if (!record.getRequestFingerprint().equals(fingerprint)) {
+            throw new IdempotencyConflictException(
+                "Idempotency-Key was already used with a different request");
+        }
+        if (record.isCompleted()) {
+            return new TransferResponseDTO(
+                record.getTransactionReferenceId(),
+                record.getLedgerTransactionId());
+        }
+        throw new IdempotencyConflictException(
+            "A request with this Idempotency-Key is still being processed");
+    }
+
+    private String fingerprint(TransferRequestDTO request) {
+        String canonical = String.join("|",
+            request.fromAccount(),
+            request.toAccount(),
+            request.amount().stripTrailingZeros().toPlainString(),
+            request.currency().toUpperCase());
+        try {
+            byte[] digest = MessageDigest.getInstance("SHA-256")
+                .digest(canonical.getBytes(StandardCharsets.UTF_8));
+            return HexFormat.of().formatHex(digest);
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException("SHA-256 unavailable", e);
+        }
     }
 
     @CacheEvict(cacheNames = "balances", allEntries = true)
