@@ -30,7 +30,7 @@ public class FraudChallenge {
     @Column(name = "from_account", nullable = false, updatable = false, length = 32)
     private String fromAccount;
 
-    @Column(name = "amount", nullable = false, updatable = false)
+    @Column(name = "amount", nullable = false, updatable = false, precision = 19, scale = 4)
     private BigDecimal amount;
 
     @Column(name = "currency", nullable = false, updatable = false, length = 3)
