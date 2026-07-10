@@ -23,7 +23,7 @@ jobs:
       # GitHub-hosted runners provide a Docker daemon, so the Testcontainers
       # integration tests (PostgreSQL) run here — closing the "no CI / tests
       # skipped in the image build" gap from the audit.
-      - name: Build, test & verify
+      - name: Build, test & verify (with JaCoCo coverage)
         run: ./mvnw -B verify
 
       - name: Publish test report
@@ -32,6 +32,14 @@ jobs:
         with:
           name: surefire-reports
           path: target/surefire-reports/
+          if-no-files-found: ignore
+
+      - name: Publish coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jacoco-coverage
+          path: target/site/jacoco/
           if-no-files-found: ignore
 
   frontend:
@@ -76,3 +84,35 @@ jobs:
           format: table
           severity: HIGH,CRITICAL
           exit-code: '0'   # report-only initially; flip to '1' to enforce once triaged
+
+  codeql:
+    name: CodeQL static analysis
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      actions: read
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [ 'java-kotlin', 'javascript-typescript' ]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        if: matrix.language == 'java-kotlin'
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
+
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v3
+
+      - name: Perform CodeQL analysis
+        uses: github/codeql-action/analyze@v3
