@@ -1,7 +1,23 @@
 # VaultCore Financial
 
+[![CI](https://github.com/mkarthik2006/vaultcore-financial/actions/workflows/ci.yml/badge.svg?branch=feature/enterprise-hardening)](https://github.com/mkarthik2006/vaultcore-financial/actions/workflows/ci.yml)
+![Tests](https://img.shields.io/badge/tests-35%20passing-brightgreen)
+![Coverage](https://img.shields.io/badge/coverage-76.9%25%20lines-brightgreen)
+![OWASP ZAP](https://img.shields.io/badge/OWASP%20ZAP-0%20High%2FCritical-brightgreen)
+![Status](https://img.shields.io/badge/status-Enterprise%20Ready-success)
+<br/>
+![Java](https://img.shields.io/badge/Java-21-orange)
+![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.5-6DB33F)
+![React](https://img.shields.io/badge/React-19-61DAFB)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-336791)
+![Redis](https://img.shields.io/badge/Redis-7-DC382D)
+![Keycloak](https://img.shields.io/badge/Keycloak-24-4D4D4D)
+![Docker](https://img.shields.io/badge/Docker-Compose-2496ED)
+
 Enterprise-grade FinTech platform built for **Zaalima Development – Q4 High-Performance Java (Project-1)**.  
 This project implements secure digital banking and portfolio operations using a cloud-native, containerized architecture.
+
+📚 **Full documentation portal:** [`docs/README.md`](docs/README.md) — architecture, API, database, security, OWASP ZAP, testing, deployment, operations, and release notes.
 
 ---
 
