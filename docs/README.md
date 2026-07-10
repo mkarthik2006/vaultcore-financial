@@ -109,10 +109,11 @@ Full diagrams (container, component, deployment, and all flow sequences) are in
 | Docker deployment | ✅ Healthy | `docker compose up` — all healthchecked services healthy |
 | OWASP ZAP baseline | ✅ 0 High / 0 Critical | [`security/zap/`](../security/zap/) |
 | Runtime security proofs | ✅ IDOR 403 · RBAC 403 · JWT validation | live stack, real Keycloak token |
-| Hosted CI (GitHub Actions) | ⏳ Pending push | workflow authored; runs on push |
+| Hosted CI (GitHub Actions) | ✅ Passing | [PR #16](https://github.com/mkarthik2006/vaultcore-financial/pull/16) — backend `mvn verify`, frontend lint/build, Trivy, CodeQL (all green) |
 
-**Production-readiness:** **Enterprise Ready** — with two documented, non-blocking follow-ups: observe
-the GitHub Actions run after push, and rotate the Keycloak DB secret for production. See
+**Production-readiness:** **Enterprise Ready** — the GitHub Actions pipeline (build, 35 tests on
+Testcontainers, Trivy, CodeQL) passes on the pull request. One documented production follow-up remains:
+rotate the Keycloak DB secret from a secret manager. See
 [10_Release_Notes_v1.0.0.md](10_Release_Notes_v1.0.0.md#9-known-limitations).
 
 ---
