@@ -1,0 +1,54 @@
+# Production overrides for a single-VM Oracle Cloud (Ampere A1 / ARM64) deployment.
+# Usage:
+#   docker compose -f docker-compose.yml -f deploy/docker-compose.prod.yml up -d --build
+#
+# What this changes vs. the dev compose:
+#   - The gateway is bound to 127.0.0.1 only; the host's nginx (TLS/Let's Encrypt) proxies to it.
+#   - Dev-only host port publishes (redis 6380, stock-mock 8081) are removed.
+#   - Keycloak advertises the public HTTPS hostname so token issuer + endpoints are correct.
+#   - The frontend is built with the public HTTPS URLs baked in (Vite build args).
+#   - Container log rotation to protect the boot volume.
+#
+# Requires Docker Compose v2.24+ for the `!override` list tag (present on current OCI installs).
+
+services:
+  gateway:
+    ports: !override
+      - "127.0.0.1:8082:80"
+    logging: &logging
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+
+  redis:
+    ports: !override []
+    logging: *logging
+
+  stock-mock-api:
+    ports: !override []
+    logging: *logging
+
+  db:
+    logging: *logging
+
+  keycloak:
+    environment:
+      # Public, browser-facing base for token issuer + endpoints (must match OAUTH2_ISSUER_URI).
+      KC_HOSTNAME_URL: ${KC_HOSTNAME_URL}
+      KC_HOSTNAME_ADMIN_URL: ${KC_HOSTNAME_ADMIN_URL}
+    logging: *logging
+
+  backend:
+    logging: *logging
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_KEYCLOAK_URL: ${VITE_KEYCLOAK_URL}
+        VITE_KEYCLOAK_REALM: ${VITE_KEYCLOAK_REALM}
+        VITE_KEYCLOAK_CLIENT_ID: ${VITE_KEYCLOAK_CLIENT_ID}
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL}
+    logging: *logging
