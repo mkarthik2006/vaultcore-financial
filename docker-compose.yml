@@ -129,7 +129,7 @@ services:
       frontend:
         condition: service_started
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost/health.json | grep -q 'UP'"]
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1/health.json | grep -q 'UP'"]
       interval: 10s
       timeout: 3s
       retries: 15
