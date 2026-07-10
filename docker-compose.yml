@@ -51,8 +51,10 @@ services:
   redis:
     image: redis:7-alpine
     container_name: vaultcore-redis
+    # Host port 6380 (container still 6379) so a local Redis / another project on 6379 does not
+    # clash; the app connects internally via the compose network (vaultcore-redis:6379).
     ports:
-      - "6379:6379"
+      - "6380:6379"
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s

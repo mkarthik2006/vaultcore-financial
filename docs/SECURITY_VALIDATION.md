@@ -49,12 +49,20 @@ It reflects the state of the repository as of the enterprise-hardening work (fea
 - React output is auto-escaped; no `dangerouslySetInnerHTML`.
 
 ## Penetration testing (OWASP ZAP)
-- CI builds the backend image and runs a Trivy vulnerability scan (report-only initially).
-- **Outstanding:** a full OWASP ZAP baseline scan against the running `docker compose` stack is still
-  required to close the Week-4 review criterion. See `RUNBOOK.md` for how to run it. Track in the
-  gap analysis.
+- **Completed.** An OWASP ZAP baseline scan was run against the running `docker compose` stack through
+  the gateway (`http://localhost:8082`). Reports: `security/zap/zap-report.html`,
+  `security/zap/zap-report.json`, summary `security/zap/ZAP_SUMMARY.md`.
+- **Result: 0 High, 0 Critical** (FAIL-NEW: 0; 62 passive rules passed). The initial run's Medium
+  findings (CSP not set, missing anti-clickjacking) and several Lows (X-Content-Type-Options,
+  Permissions-Policy, Server version leak) were **fixed** by adding scoped security headers and
+  `server_tokens off` to the nginx gateway, then re-scanned to confirm.
+- One accepted Medium remains — `CSP: style-src 'unsafe-inline'` — required for the React SPA's inline
+  `style` attributes; `script-src` stays strict `'self'`, so script-injection XSS is still blocked.
+- CI also builds the backend image and runs a Trivy image scan.
 
-## Known residual items (tracked, not yet closed)
-- Persistent, tamper-evident audit table + correlation IDs (currently SLF4J audit logs only).
-- Rate limiting on auth/transfer endpoints (Redis counters).
-- Redis-backed Hibernate L2 cache entity annotations; connection-pool sizing.
+## Known residual items (tracked)
+- CSP `style-src 'unsafe-inline'` (accepted, see above) — would need inline styles migrated to
+  stylesheets to remove.
+- Cross-Origin-Embedder-Policy header omitted deliberately (`require-corp` risks breaking Keycloak SSO).
+- The Keycloak DB credential in `docker/db/init/01-create-keycloak-db.sql` is a dev value; production
+  should source it from a secret.
