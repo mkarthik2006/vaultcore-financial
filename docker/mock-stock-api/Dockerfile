@@ -11,5 +11,6 @@ COPY index.js .
 # node:* images ship a non-root "node" user; run as it.
 USER node
 
+
 EXPOSE 8080
 CMD ["node", "index.js"]
