@@ -9,11 +9,16 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import java.util.UUID;
 
 @Entity
 @Table(name = "accounts")
+// Accounts are read-mostly and looked up by number on every transfer/balance call: opt them into the
+// Redis-backed Hibernate second-level cache (inert in the test profile, which disables L2).
+@Cache(usage = CacheConcurrencyStrategy.READ_WRITE, region = "accounts")
 public class Account {
 
     @Id

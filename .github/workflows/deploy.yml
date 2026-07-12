@@ -1,0 +1,34 @@
+name: Deploy to Oracle Cloud
+
+# Manual trigger (recommended for a portfolio/demo) or on a published release.
+# Requires repository secrets:
+#   OCI_HOST         - VM public IP or domain
+#   OCI_SSH_USER     - e.g. ubuntu
+#   OCI_SSH_KEY      - private SSH key (PEM) with access to the VM
+#   OCI_APP_DIR      - absolute path to the cloned repo on the VM (e.g. /home/ubuntu/vaultcore-financial)
+on:
+  workflow_dispatch:
+  release:
+    types: [published]
+
+concurrency:
+  group: deploy-oci
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: SSH deploy (build + health-gated + rollback)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy over SSH
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.OCI_HOST }}
+          username: ${{ secrets.OCI_SSH_USER }}
+          key: ${{ secrets.OCI_SSH_KEY }}
+          command_timeout: 30m
+          script: |
+            set -euo pipefail
+            cd "${{ secrets.OCI_APP_DIR }}"
+            # deploy.sh pulls the latest code, rebuilds, health-checks, and rolls back on failure.
+            bash deploy/scripts/deploy.sh

@@ -1,0 +1,219 @@
+/*
+ * Global resets and cross-cutting utility classes layered on top of Bootstrap + tokens.css.
+ * Bootstrap's own component CSS (buttons, cards, modals, tables) is left untouched here;
+ * this file only sets page-level defaults and small utility classes used across pages.
+ */
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  font-family: var(--vc-font-sans);
+  font-size: var(--vc-text-base);
+  color: var(--vc-text);
+  background-color: var(--vc-bg);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+a {
+  color: var(--vc-brand-accent);
+}
+
+:focus-visible {
+  outline: 2px solid var(--vc-brand-accent);
+  outline-offset: 2px;
+  border-radius: var(--vc-radius-sm);
+}
+
+.vc-text-muted {
+  color: var(--vc-text-muted) !important;
+}
+
+.vc-mono {
+  font-family: var(--vc-font-mono);
+  font-size: 0.9em;
+}
+
+.vc-card {
+  background: var(--vc-surface);
+  border: 1px solid var(--vc-border);
+  border-radius: var(--vc-radius-lg);
+  box-shadow: var(--vc-shadow-sm);
+}
+
+.vc-surface-muted {
+  background: var(--vc-surface-muted);
+}
+
+.vc-btn-brand {
+  background: var(--vc-brand);
+  border-color: var(--vc-brand);
+  color: var(--vc-text-inverse);
+}
+
+.vc-btn-brand:hover,
+.vc-btn-brand:focus {
+  background: var(--vc-slate-800);
+  border-color: var(--vc-slate-800);
+  color: var(--vc-text-inverse);
+}
+
+.vc-btn-brand:disabled {
+  background: var(--vc-slate-400);
+  border-color: var(--vc-slate-400);
+}
+
+.vc-skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 2000;
+  background: var(--vc-brand);
+  color: #fff;
+  padding: var(--vc-space-3) var(--vc-space-4);
+  border-radius: var(--vc-radius-sm);
+}
+
+.vc-skip-link:focus {
+  left: var(--vc-space-4);
+  top: var(--vc-space-4);
+}
+
+.vc-fade-in {
+  animation: vc-fade-in 180ms ease;
+}
+
+@keyframes vc-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vc-fade-in {
+    animation: none;
+  }
+  * {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}
+
+/* No horizontal scrolling anywhere in the app shell. */
+.vc-app-shell {
+  overflow-x: hidden;
+}
+
+.vc-scroll-x {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--vc-slate-300);
+  border-radius: var(--vc-radius-pill);
+}
+
+.vc-skeleton {
+  background: linear-gradient(90deg, var(--vc-slate-100) 25%, var(--vc-slate-200) 37%, var(--vc-slate-100) 63%);
+  background-size: 400% 100%;
+  animation: vc-shimmer 1.4s ease infinite;
+}
+
+@keyframes vc-shimmer {
+  0% { background-position: 100% 50%; }
+  100% { background-position: 0 50%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vc-skeleton {
+    animation: none;
+    background: var(--vc-slate-200);
+  }
+}
+
+/* ---- App shell layout ---- */
+
+.vc-topnav {
+  height: var(--vc-topnav-height);
+  background: var(--vc-slate-900);
+  color: #fff;
+  position: sticky;
+  top: 0;
+  z-index: 1030;
+}
+
+.vc-sidebar {
+  width: var(--vc-sidebar-width);
+  flex-shrink: 0;
+  background: var(--vc-surface);
+  border-right: 1px solid var(--vc-border);
+  position: fixed;
+  top: var(--vc-topnav-height);
+  bottom: 0;
+  left: 0;
+  overflow-y: auto;
+  transform: translateX(-100%);
+  transition: transform var(--vc-transition);
+  z-index: 1045;
+}
+
+.vc-sidebar-open {
+  transform: translateX(0);
+}
+
+@media (min-width: 768px) {
+  .vc-sidebar {
+    position: sticky;
+    transform: none;
+  }
+}
+
+.vc-nav-link {
+  color: var(--vc-slate-600);
+}
+
+.vc-nav-link:hover {
+  background: var(--vc-slate-100);
+  color: var(--vc-text);
+}
+
+.vc-nav-link.active {
+  background: var(--vc-slate-900);
+  color: #fff;
+}
+
+.vc-content {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.vc-main-scroll {
+  min-height: calc(100vh - var(--vc-topnav-height));
+}
+
+/* ---- Auth screen ---- */
+
+.vc-auth-backdrop {
+  min-height: 100vh;
+  background: linear-gradient(135deg, var(--vc-slate-900), var(--vc-slate-800), var(--vc-slate-700));
+}

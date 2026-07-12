@@ -34,8 +34,8 @@ services:
       KC_DB_SCHEMA: ${KEYCLOAK_DB_SCHEMA}
       KC_HTTP_ENABLED: "true"
       KC_HOSTNAME_STRICT: "false"
-      KC_HOSTNAME_URL: "http://vaultcore-keycloak:8080"
-      KC_HOSTNAME_ADMIN_URL: "http://vaultcore-keycloak:8080"
+      KC_HOSTNAME_URL: "http://localhost:8082/auth"
+      KC_HOSTNAME_ADMIN_URL: "http://localhost:8082/auth"
       KC_PROXY_HEADERS: "xforwarded"
     depends_on:
       db:
@@ -51,8 +51,10 @@ services:
   redis:
     image: redis:7-alpine
     container_name: vaultcore-redis
+    # Host port 6380 (container still 6379) so a local Redis / another project on 6379 does not
+    # clash; the app connects internally via the compose network (vaultcore-redis:6379).
     ports:
-      - "6379:6379"
+      - "6380:6379"
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
@@ -127,7 +129,7 @@ services:
       frontend:
         condition: service_started
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost/health.json | grep -q 'UP'"]
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1/health.json | grep -q 'UP'"]
       interval: 10s
       timeout: 3s
       retries: 15

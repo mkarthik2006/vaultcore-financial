@@ -5,5 +5,6 @@ import jakarta.validation.constraints.Size;
 
 public record CreateAccountRequest(
     @NotBlank String accountNumber,
-    @NotBlank @Size(min = 3, max = 3) String currency
+    @NotBlank @Size(min = 3, max = 3) String currency,
+    String ownerUsername
 ) {}

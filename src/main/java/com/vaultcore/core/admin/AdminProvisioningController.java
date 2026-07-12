@@ -6,6 +6,8 @@ import com.vaultcore.user.UserEntity;
 import com.vaultcore.user.UserRepository;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
@@ -13,15 +15,19 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/admin")
+@PreAuthorize("hasRole('ADMIN')")
 public class AdminProvisioningController {
 
     private final UserRepository userRepository;
     private final AccountRepository accountRepository;
+    private final PasswordEncoder passwordEncoder;
 
     public AdminProvisioningController(UserRepository userRepository,
-                                       AccountRepository accountRepository) {
+                                       AccountRepository accountRepository,
+                                       PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.accountRepository = accountRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @PostMapping("/users")
@@ -42,9 +48,14 @@ public class AdminProvisioningController {
 
         boolean enabled = request.enabled() == null || request.enabled();
 
-        String passwordHash = (request.passwordHash() == null || request.passwordHash().isBlank())
-            ? "external"
-            : request.passwordHash().trim();
+        // Authentication is delegated to Keycloak, but any locally-stored credential must still be
+        // a strong one-way hash. A provided value is treated as a raw secret and BCrypt-hashed; when
+        // absent we store a BCrypt hash of a random value so the column never holds a usable/known
+        // credential (replaces the previous plaintext "external" placeholder).
+        String rawPassword = request.passwordHash();
+        String passwordHash = (rawPassword == null || rawPassword.isBlank())
+            ? passwordEncoder.encode(UUID.randomUUID().toString())
+            : passwordEncoder.encode(rawPassword.trim());
 
         UserEntity user = new UserEntity(
             UUID.randomUUID(),
@@ -74,7 +85,18 @@ public class AdminProvisioningController {
             throw new IllegalArgumentException("Account already exists: " + accountNumber);
         }
 
-        Account account = accountRepository.save(new Account(accountNumber, currency));
+        // Optionally bind the account to an owning user so object-level authorization can be
+        // enforced on transfers/balances. Backwards compatible: omitting ownerUsername creates an
+        // unowned (e.g. system/clearing) account exactly as before.
+        Account account;
+        if (request.ownerUsername() != null && !request.ownerUsername().isBlank()) {
+            UserEntity owner = userRepository.findByUsername(request.ownerUsername().trim())
+                .orElseThrow(() -> new IllegalArgumentException(
+                    "Owner user not found: " + request.ownerUsername()));
+            account = accountRepository.save(new Account(accountNumber, currency, owner));
+        } else {
+            account = accountRepository.save(new Account(accountNumber, currency));
+        }
 
         URI location = URI.create("/api/v1/admin/accounts/" + account.getId());
         return ResponseEntity.created(location).body(new AccountResponse(

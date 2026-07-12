@@ -15,44 +15,36 @@ import java.time.format.DateTimeFormatter;
 public class StatementPdfRenderer {
 
     public byte[] render(MonthlyStatement statement) {
-        try (PDDocument doc = new PDDocument()) {
-            PDPage page = new PDPage();
-            doc.addPage(page);
+        try (PDDocument doc = new PDDocument();
+             PageWriter writer = new PageWriter(doc)) {
 
-            try (PDPageContentStream content = new PDPageContentStream(doc, page)) {
-                float y = 750;
+            writer.heading("VaultCore Monthly Statement");
+            writer.gap(14);
 
-                content.beginText();
-                content.setFont(PDType1Font.HELVETICA_BOLD, 16);
-                content.newLineAtOffset(50, y);
-                content.showText("VaultCore Monthly Statement");
-                content.endText();
+            writer.line("Account: " + statement.accountNumber());
+            writer.line("Currency: " + statement.currency());
+            writer.line("Month: " + statement.month());
+            writer.line("Opening Balance: " + statement.openingBalance());
+            writer.line("Closing Balance: " + statement.closingBalance());
 
-                y -= 30;
+            writer.gap(10);
+            writer.line("Total Debits: " + statement.totalDebits());
+            writer.line("Total Credits: " + statement.totalCredits());
 
-                y = writeLine(content, y, "Account: " + statement.accountNumber());
-                y = writeLine(content, y, "Currency: " + statement.currency());
-                y = writeLine(content, y, "Month: " + statement.month());
-                y = writeLine(content, y, "Opening Balance: " + statement.openingBalance());
-                y = writeLine(content, y, "Closing Balance: " + statement.closingBalance());
+            writer.gap(20);
+            writer.line("Transactions:");
 
-                y -= 10;
-                y = writeLine(content, y, "Total Debits: " + statement.totalDebits());
-                y = writeLine(content, y, "Total Credits: " + statement.totalCredits());
-
-                y -= 20;
-                y = writeLine(content, y, "Transactions:");
-
-                DateTimeFormatter dt = DateTimeFormatter.ISO_INSTANT;
-                for (LedgerEntry e : statement.entries()) {
-                    String line = dt.format(e.getCreatedAt()) + " | "
-                        + e.getEntryType() + " | "
-                        + e.getAmount() + " | "
-                        + safe(e.getDescription());
-                    y = writeLine(content, y, line);
-                    if (y < 100) break;
-                }
+            DateTimeFormatter dt = DateTimeFormatter.ISO_INSTANT;
+            for (LedgerEntry e : statement.entries()) {
+                String line = dt.format(e.getCreatedAt()) + " | "
+                    + e.getEntryType() + " | "
+                    + e.getAmount() + " | "
+                    + safe(e.getDescription());
+                // Overflow now flows onto a new page instead of being silently dropped.
+                writer.line(line);
             }
+
+            writer.finish();
 
             ByteArrayOutputStream out = new ByteArrayOutputStream();
             doc.save(out);
@@ -62,16 +54,85 @@ public class StatementPdfRenderer {
         }
     }
 
-    private float writeLine(PDPageContentStream content, float y, String text) throws IOException {
-        content.beginText();
-        content.setFont(PDType1Font.HELVETICA, 10);
-        content.newLineAtOffset(50, y);
-        content.showText(text);
-        content.endText();
-        return y - 14;
+    private String safe(String text) {
+        if (text == null) {
+            return "";
+        }
+        // PDFBox standard-14 fonts only encode WinAnsi; replace control/non-encodable characters so
+        // an odd description can never crash statement generation.
+        StringBuilder sb = new StringBuilder(text.length());
+        for (char c : text.toCharArray()) {
+            sb.append((c >= 32 && c < 127) ? c : '?');
+        }
+        return sb.toString();
     }
 
-    private String safe(String text) {
-        return text == null ? "" : text;
+    /**
+     * Cursor over a growing PDF: writes lines top-to-bottom and starts a fresh page automatically
+     * when the bottom margin is reached, so statements of any length render in full.
+     */
+    private static final class PageWriter implements AutoCloseable {
+
+        private static final float TOP = 750f;
+        private static final float BOTTOM = 60f;
+        private static final float LEFT = 50f;
+        private static final float LEADING = 14f;
+
+        private final PDDocument doc;
+        private PDPageContentStream content;
+        private float y;
+
+        PageWriter(PDDocument doc) throws IOException {
+            this.doc = doc;
+            newPage();
+        }
+
+        void heading(String text) throws IOException {
+            write(text, PDType1Font.HELVETICA_BOLD, 16);
+            y -= 16;
+        }
+
+        void line(String text) throws IOException {
+            if (y <= BOTTOM) {
+                newPage();
+            }
+            write(text, PDType1Font.HELVETICA, 10);
+            y -= LEADING;
+        }
+
+        void gap(float pixels) {
+            y -= pixels;
+        }
+
+        /** Closes the active content stream so the document can be saved. */
+        void finish() throws IOException {
+            close();
+        }
+
+        private void newPage() throws IOException {
+            if (content != null) {
+                content.close();
+            }
+            PDPage page = new PDPage();
+            doc.addPage(page);
+            content = new PDPageContentStream(doc, page);
+            y = TOP;
+        }
+
+        private void write(String text, PDType1Font font, int size) throws IOException {
+            content.beginText();
+            content.setFont(font, size);
+            content.newLineAtOffset(LEFT, y);
+            content.showText(text);
+            content.endText();
+        }
+
+        @Override
+        public void close() throws IOException {
+            if (content != null) {
+                content.close();
+                content = null;
+            }
+        }
     }
 }

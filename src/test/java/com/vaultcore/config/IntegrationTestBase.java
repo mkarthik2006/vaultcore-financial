@@ -29,6 +29,11 @@ public abstract class IntegrationTestBase {
         registry.add("spring.jpa.hibernate.ddl-auto", () -> "validate");
         registry.add("spring.flyway.enabled", () -> "true");
         registry.add("spring.cache.type", () -> "none");
+        // No Redis in the test context: disable the Redisson-backed Hibernate L2 cache (Account is
+        // @Cache-annotated) and the rate limiter so tests neither require Redis nor throttle.
+        registry.add("spring.jpa.properties.hibernate.cache.use_second_level_cache", () -> "false");
+        registry.add("spring.jpa.properties.hibernate.cache.use_query_cache", () -> "false");
+        registry.add("app.rate-limit.enabled", () -> "false");
         registry.add("spring.autoconfigure.exclude", () ->
             "org.redisson.spring.starter.RedissonAutoConfigurationV2"
         );

@@ -1,49 +1,54 @@
 import { useState } from "react";
 import { createAccount, createUser } from "../services/adminApi";
+import Card, { CardHeader } from "../components/ui/Card";
+import PageHeader from "../components/ui/PageHeader";
+import Alert from "../components/ui/Alert";
+import Button from "../components/ui/Button";
+import StatusChip from "../components/ui/StatusChip";
+import EmptyState from "../components/ui/EmptyState";
+import { useToast } from "../components/ui/toastContext";
+
+function Field({ id, label, children }) {
+  return (
+    <div className="mb-3">
+      <label htmlFor={id} className="form-label small vc-text-muted mb-1">{label}</label>
+      {children}
+    </div>
+  );
+}
 
 export default function AdminProvisioning() {
-  const [userForm, setUserForm] = useState({
-    email: "",
-    username: "",
-    roles: "USER",
-    enabled: true,
-    passwordHash: ""
-  });
+  const toast = useToast();
 
-  const [accountForm, setAccountForm] = useState({
-    accountNumber: "",
-    currency: "USD"
-  });
+  const [userForm, setUserForm] = useState({ email: "", username: "", roles: "USER", enabled: true, passwordHash: "" });
+  const [accountForm, setAccountForm] = useState({ accountNumber: "", currency: "USD", ownerUsername: "" });
 
-  const [userResult, setUserResult] = useState(null);
-  const [accountResult, setAccountResult] = useState(null);
   const [userError, setUserError] = useState("");
   const [accountError, setAccountError] = useState("");
   const [submittingUser, setSubmittingUser] = useState(false);
   const [submittingAccount, setSubmittingAccount] = useState(false);
 
+  // Session-local activity log — reflects real actions taken in this browser session, not
+  // fabricated data. The backend exposes no list/search endpoint for users or accounts, so this
+  // is intentionally not a persistent admin table.
+  const [activity, setActivity] = useState([]);
+
   async function handleCreateUser(e) {
     e.preventDefault();
     setSubmittingUser(true);
     setUserError("");
-    setUserResult(null);
     try {
       const payload = {
         email: userForm.email.trim(),
         username: userForm.username.trim(),
         roles: userForm.roles.trim(),
         enabled: !!userForm.enabled,
-        passwordHash: userForm.passwordHash.trim()
+        passwordHash: userForm.passwordHash.trim(),
       };
       const res = await createUser(payload);
-      setUserResult(res);
-      setUserForm({
-        email: "",
-        username: "",
-        roles: "USER",
-        enabled: true,
-        passwordHash: ""
-      });
+      toast.push(`User "${res.username}" created`, { tone: "success" });
+      setActivity((prev) => [{ type: "user", label: res.username, detail: res.email, at: new Date() }, ...prev]);
+      setUserForm({ email: "", username: "", roles: "USER", enabled: true, passwordHash: "" });
     } catch (e) {
       setUserError(e?.message || "Failed to create user");
     } finally {
@@ -55,18 +60,16 @@ export default function AdminProvisioning() {
     e.preventDefault();
     setSubmittingAccount(true);
     setAccountError("");
-    setAccountResult(null);
     try {
       const payload = {
         accountNumber: accountForm.accountNumber.trim(),
-        currency: accountForm.currency.trim().toUpperCase()
+        currency: accountForm.currency.trim().toUpperCase(),
+        ...(accountForm.ownerUsername.trim() ? { ownerUsername: accountForm.ownerUsername.trim() } : {}),
       };
       const res = await createAccount(payload);
-      setAccountResult(res);
-      setAccountForm({
-        accountNumber: "",
-        currency: "USD"
-      });
+      toast.push(`Account "${res.accountNumber}" created`, { tone: "success" });
+      setActivity((prev) => [{ type: "account", label: res.accountNumber, detail: res.currency, at: new Date() }, ...prev]);
+      setAccountForm({ accountNumber: "", currency: "USD", ownerUsername: "" });
     } catch (e) {
       setAccountError(e?.message || "Failed to create account");
     } finally {
@@ -75,156 +78,88 @@ export default function AdminProvisioning() {
   }
 
   return (
-    <main style={{
-      maxWidth: 920,
-      margin: "3rem auto",
-      padding: "0 1rem"
-    }}>
-      <header style={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        marginBottom: 24
-      }}>
-        <h2 style={{ color: "#0f172a" }}>Admin Provisioning</h2>
-        <span style={{
-          background: "#0f172a",
-          color: "#fff",
-          padding: "6px 12px",
-          borderRadius: 999,
-          fontSize: "0.85rem"
-        }}>Authorized Use Only</span>
-      </header>
+    <div className="vc-fade-in">
+      <PageHeader
+        breadcrumbs={[{ label: "Dashboard", to: "/dashboard" }, { label: "Admin" }]}
+        title="Admin Provisioning"
+        description="Create backend user and account records. Keycloak identities must already exist."
+        actions={<StatusChip tone="warning" icon="bi-shield-lock-fill">Authorized Use Only</StatusChip>}
+      />
 
-      <section style={{
-        display: "grid",
-        gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
-        gap: 20
-      }}>
-        <div style={{
-          background: "#fff",
-          borderRadius: 12,
-          padding: "1.5rem",
-          boxShadow: "0 8px 24px rgba(16, 29, 51, 0.08)"
-        }}>
-          <h3>Create User</h3>
-          <p style={{ color: "#64748b", fontSize: "0.95rem" }}>
-            Creates a backend user record (Keycloak user must already exist).
-          </p>
-
-          {userError && (
-            <div style={{
-              background: "#fee", border: "1px solid #dc2626",
-              color: "#dc2626", padding: 10, borderRadius: 8, marginBottom: 12
-            }}>
-              <strong>Error:</strong> {userError}
-            </div>
-          )}
-
-          {userResult && (
-            <div style={{
-              background: "#e6faee", border: "1px solid #16a34a",
-              color: "#166534", padding: 10, borderRadius: 8, marginBottom: 12
-            }}>
-              ✅ User created: <strong>{userResult.username}</strong>
-            </div>
-          )}
-
-          <form onSubmit={handleCreateUser} style={{ display: "grid", gap: 10 }}>
-            <input
-              placeholder="Email"
-              value={userForm.email}
-              onChange={e => setUserForm({ ...userForm, email: e.target.value })}
-              required
-            />
-            <input
-              placeholder="Username"
-              value={userForm.username}
-              onChange={e => setUserForm({ ...userForm, username: e.target.value })}
-              required
-            />
-            <input
-              placeholder="Roles (e.g., USER)"
-              value={userForm.roles}
-              onChange={e => setUserForm({ ...userForm, roles: e.target.value })}
-            />
-            <label style={{ display: "flex", alignItems: "center", gap: 6 }}>
-              <input
-                type="checkbox"
-                checked={userForm.enabled}
-                onChange={e => setUserForm({ ...userForm, enabled: e.target.checked })}
-              />
-              Enabled
-            </label>
-            <input
-              placeholder="Password Hash (optional)"
-              value={userForm.passwordHash}
-              onChange={e => setUserForm({ ...userForm, passwordHash: e.target.value })}
-            />
-            <button type="submit" disabled={submittingUser}>
-              {submittingUser ? "Creating..." : "Create User"}
-            </button>
-          </form>
+      <div className="row g-3">
+        <div className="col-12 col-lg-6">
+          <Card>
+            <CardHeader title="Create User" subtitle="Requires an existing Keycloak identity" icon="bi-person-plus-fill" />
+            {userError && <Alert tone="danger" className="mb-3">{userError}</Alert>}
+            <form onSubmit={handleCreateUser}>
+              <Field id="user-email" label="Email">
+                <input id="user-email" type="email" className="form-control" value={userForm.email} onChange={(e) => setUserForm({ ...userForm, email: e.target.value })} required />
+              </Field>
+              <Field id="user-username" label="Username">
+                <input id="user-username" className="form-control" value={userForm.username} onChange={(e) => setUserForm({ ...userForm, username: e.target.value })} required />
+              </Field>
+              <Field id="user-roles" label="Roles">
+                <input id="user-roles" className="form-control" placeholder="USER" value={userForm.roles} onChange={(e) => setUserForm({ ...userForm, roles: e.target.value })} />
+              </Field>
+              <div className="form-check mb-3">
+                <input id="user-enabled" type="checkbox" className="form-check-input" checked={userForm.enabled} onChange={(e) => setUserForm({ ...userForm, enabled: e.target.checked })} />
+                <label htmlFor="user-enabled" className="form-check-label small">Enabled</label>
+              </div>
+              <Field id="user-password" label="Password hash (optional)">
+                <input id="user-password" type="password" className="form-control" autoComplete="new-password" value={userForm.passwordHash} onChange={(e) => setUserForm({ ...userForm, passwordHash: e.target.value })} />
+              </Field>
+              <Button type="submit" busy={submittingUser} busyLabel="Creating…" icon="bi-person-plus-fill" className="justify-content-center w-100">
+                Create User
+              </Button>
+            </form>
+          </Card>
         </div>
 
-        <div style={{
-          background: "#fff",
-          borderRadius: 12,
-          padding: "1.5rem",
-          boxShadow: "0 8px 24px rgba(16, 29, 51, 0.08)"
-        }}>
-          <h3>Create Account</h3>
-          <p style={{ color: "#64748b", fontSize: "0.95rem" }}>
-            Creates an account for ledger / transfers.
-          </p>
-
-          {accountError && (
-            <div style={{
-              background: "#fee", border: "1px solid #dc2626",
-              color: "#dc2626", padding: 10, borderRadius: 8, marginBottom: 12
-            }}>
-              <strong>Error:</strong> {accountError}
-            </div>
-          )}
-
-          {accountResult && (
-            <div style={{
-              background: "#e6faee", border: "1px solid #16a34a",
-              color: "#166534", padding: 10, borderRadius: 8, marginBottom: 12
-            }}>
-              ✅ Account created: <strong>{accountResult.accountNumber}</strong>
-            </div>
-          )}
-
-          <form onSubmit={handleCreateAccount} style={{ display: "grid", gap: 10 }}>
-            <input
-              placeholder="Account Number"
-              value={accountForm.accountNumber}
-              onChange={e => setAccountForm({ ...accountForm, accountNumber: e.target.value })}
-              required
-            />
-            <input
-              placeholder="Currency (e.g., USD)"
-              value={accountForm.currency}
-              onChange={e => setAccountForm({ ...accountForm, currency: e.target.value })}
-              maxLength={3}
-              required
-            />
-            <button type="submit" disabled={submittingAccount}>
-              {submittingAccount ? "Creating..." : "Create Account"}
-            </button>
-          </form>
+        <div className="col-12 col-lg-6">
+          <Card>
+            <CardHeader title="Create Account" subtitle="For ledger transfers and balances" icon="bi-bank2" />
+            {accountError && <Alert tone="danger" className="mb-3">{accountError}</Alert>}
+            <form onSubmit={handleCreateAccount}>
+              <Field id="acct-number" label="Account number">
+                <input id="acct-number" className="form-control" value={accountForm.accountNumber} onChange={(e) => setAccountForm({ ...accountForm, accountNumber: e.target.value })} required />
+              </Field>
+              <Field id="acct-currency" label="Currency">
+                <input id="acct-currency" className="form-control text-uppercase" maxLength={3} value={accountForm.currency} onChange={(e) => setAccountForm({ ...accountForm, currency: e.target.value })} required />
+              </Field>
+              <Field id="acct-owner" label="Owner username (optional)">
+                <input id="acct-owner" className="form-control" placeholder="Leave blank for an unowned / clearing account" value={accountForm.ownerUsername} onChange={(e) => setAccountForm({ ...accountForm, ownerUsername: e.target.value })} />
+              </Field>
+              <Button type="submit" busy={submittingAccount} busyLabel="Creating…" icon="bi-bank2" className="justify-content-center w-100">
+                Create Account
+              </Button>
+            </form>
+          </Card>
         </div>
-      </section>
 
-      <footer style={{
-        marginTop: "2rem",
-        textAlign: "center",
-        fontSize: "0.9rem",
-        color: "#64748b"
-      }}>
-        VaultCore &copy; 2026. Admin provisioning requires authorization.
-      </footer>
-    </main>
+        <div className="col-12">
+          <Card>
+            <CardHeader title="Session Activity" subtitle="Records created in this browser session" icon="bi-clock-history" />
+            {activity.length === 0 ? (
+              <EmptyState icon="bi-clock-history" title="No activity yet" description="Records you create above will appear here." />
+            ) : (
+              <ul className="list-unstyled d-flex flex-column gap-2 mb-0">
+                {activity.map((a, i) => (
+                  <li key={i} className="d-flex justify-content-between align-items-center small border-bottom pb-2">
+                    <span className="d-flex align-items-center gap-2">
+                      <StatusChip tone={a.type === "user" ? "info" : "neutral"} icon={a.type === "user" ? "bi-person-fill" : "bi-bank2"}>
+                        {a.type === "user" ? "User" : "Account"}
+                      </StatusChip>
+                      <span className="fw-medium">{a.label}</span>
+                      <span className="vc-text-muted">{a.detail}</span>
+                    </span>
+                    <span className="vc-text-muted">{a.at.toLocaleTimeString()}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Card>
+        </div>
+      </div>
+    </div>
   );
 }
