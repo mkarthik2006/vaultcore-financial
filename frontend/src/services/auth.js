@@ -11,10 +11,16 @@ let accessToken = null;
 
 /** Pushes the current Keycloak session into the Zustand auth store. */
 function syncAuthStore() {
+  // auth_time is the moment the user actually authenticated with Keycloak (stable across silent
+  // token refreshes); iat is only a fallback for tokens that omit it. Neither is a true
+  // "last login" record (the backend exposes no such endpoint) — the UI must label this honestly.
+  const claims = keycloak.tokenParsed;
+  const epochSeconds = claims?.auth_time ?? claims?.iat ?? null;
   useAuthStore.getState().setAuth({
     authenticated: !!keycloak.authenticated,
-    roles: keycloak.tokenParsed?.realm_access?.roles ?? [],
-    username: keycloak.tokenParsed?.preferred_username ?? null,
+    roles: claims?.realm_access?.roles ?? [],
+    username: claims?.preferred_username ?? null,
+    sessionStartedAt: epochSeconds ? epochSeconds * 1000 : null,
   });
 }
 

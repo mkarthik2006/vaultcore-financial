@@ -1,4 +1,5 @@
 import { Component } from "react";
+import ServerError from "../pages/errors/ServerError";
 
 /**
  * Catches render-time errors anywhere in the tree so a single failing view degrades gracefully
@@ -21,12 +22,7 @@ export default class ErrorBoundary extends Component {
 
   render() {
     if (this.state.hasError) {
-      return (
-        <div style={{ padding: "2rem" }} role="alert">
-          <h2>Something went wrong.</h2>
-          <p>Please refresh the page. If the problem persists, contact support.</p>
-        </div>
-      );
+      return <ServerError onRetry={() => window.location.reload()} />;
     }
     return this.props.children;
   }

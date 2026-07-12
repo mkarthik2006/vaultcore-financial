@@ -1,0 +1,103 @@
+/*
+ * VaultCore design tokens. Single source of truth for color, spacing, type, shadow, and radius —
+ * every component should reference these variables rather than hardcoding values, so the palette
+ * or scale can change in one place. Values are exposed as CSS custom properties so they work in
+ * both plain CSS and inline styles, and re-exposed as Bootstrap "--bs-*" overrides where Bootstrap
+ * reads its own variables (see global.css) rather than forking Bootstrap's source.
+ */
+:root {
+  /* Brand neutrals (slate) */
+  --vc-slate-50: #f8fafc;
+  --vc-slate-100: #f1f5f9;
+  --vc-slate-200: #e2e8f0;
+  --vc-slate-300: #cbd5e1;
+  --vc-slate-400: #94a3b8;
+  --vc-slate-500: #64748b;
+  --vc-slate-600: #475569;
+  --vc-slate-700: #334155;
+  --vc-slate-800: #1e293b;
+  --vc-slate-900: #0f172a;
+
+  /* Brand blue (interactive / links / info) */
+  --vc-blue-50: #eff6ff;
+  --vc-blue-100: #dbeafe;
+  --vc-blue-500: #3b82f6;
+  --vc-blue-600: #2563eb;
+  --vc-blue-700: #1d4ed8;
+
+  /* Emerald (positive / success / money-in) */
+  --vc-emerald-50: #ecfdf5;
+  --vc-emerald-100: #d1fae5;
+  --vc-emerald-500: #10b981;
+  --vc-emerald-600: #059669;
+  --vc-emerald-700: #047857;
+
+  /* Amber (warning / pending) */
+  --vc-amber-50: #fffbeb;
+  --vc-amber-100: #fef3c7;
+  --vc-amber-500: #f59e0b;
+  --vc-amber-700: #b45309;
+
+  /* Red (danger / money-out / error) */
+  --vc-red-50: #fef2f2;
+  --vc-red-100: #fee2e2;
+  --vc-red-500: #ef4444;
+  --vc-red-600: #dc2626;
+  --vc-red-700: #b91c1c;
+
+  /* Semantic roles */
+  --vc-bg: var(--vc-slate-50);
+  --vc-surface: #ffffff;
+  --vc-surface-muted: var(--vc-slate-100);
+  --vc-border: var(--vc-slate-200);
+  --vc-text: var(--vc-slate-900);
+  --vc-text-muted: var(--vc-slate-500);
+  --vc-text-inverse: #ffffff;
+  --vc-brand: var(--vc-slate-900);
+  --vc-brand-accent: var(--vc-blue-600);
+  --vc-success: var(--vc-emerald-600);
+  --vc-warning: var(--vc-amber-500);
+  --vc-danger: var(--vc-red-600);
+  --vc-focus-ring: rgba(37, 99, 235, 0.45);
+
+  /* Spacing scale (4px base) */
+  --vc-space-1: 0.25rem;
+  --vc-space-2: 0.5rem;
+  --vc-space-3: 0.75rem;
+  --vc-space-4: 1rem;
+  --vc-space-5: 1.25rem;
+  --vc-space-6: 1.5rem;
+  --vc-space-8: 2rem;
+  --vc-space-10: 2.5rem;
+  --vc-space-12: 3rem;
+  --vc-space-16: 4rem;
+
+  /* Typography scale */
+  --vc-font-sans: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --vc-font-mono: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+  --vc-text-xs: 0.75rem;
+  --vc-text-sm: 0.8125rem;
+  --vc-text-base: 0.9375rem;
+  --vc-text-md: 1.0625rem;
+  --vc-text-lg: 1.25rem;
+  --vc-text-xl: 1.5rem;
+  --vc-text-2xl: 1.875rem;
+  --vc-text-3xl: 2.25rem;
+
+  /* Radius */
+  --vc-radius-sm: 6px;
+  --vc-radius-md: 10px;
+  --vc-radius-lg: 14px;
+  --vc-radius-pill: 999px;
+
+  /* Shadows */
+  --vc-shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06);
+  --vc-shadow-md: 0 4px 16px rgba(15, 23, 42, 0.08);
+  --vc-shadow-lg: 0 12px 32px rgba(15, 23, 42, 0.12);
+  --vc-shadow-xl: 0 20px 50px rgba(15, 23, 42, 0.18);
+
+  /* Layout */
+  --vc-sidebar-width: 248px;
+  --vc-topnav-height: 60px;
+  --vc-transition: 160ms ease;
+}

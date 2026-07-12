@@ -39,6 +39,9 @@ public class SecurityConfig {
     @Value("${spring.security.oauth2.resourceserver.jwt.issuer-uri}")
     private String issuer;
 
+    @Value("${spring.security.oauth2.resourceserver.jwt.jwk-set-uri}")
+    private String jwkSetUri;
+
     @Value("${app.security.jwt.audience:}")
     private String audience;
 
@@ -102,7 +105,11 @@ public class SecurityConfig {
     @Bean
     @Profile("!test")
     public JwtDecoder jwtDecoder() {
-        NimbusJwtDecoder decoder = (NimbusJwtDecoder) JwtDecoders.fromIssuerLocation(issuer);
+        // Built from the JWK set URI (network-reachable from within this container) rather than
+        // JwtDecoders.fromIssuerLocation(issuer), which would require fetching discovery metadata
+        // from the browser-facing issuer URL and fail its issuer-match check under split-horizon
+        // DNS (Keycloak reachable at a different address for browsers vs. backend-to-backend calls).
+        NimbusJwtDecoder decoder = NimbusJwtDecoder.withJwkSetUri(jwkSetUri).build();
 
         // Issuer validation (default) + custom validators
         List<OAuth2TokenValidator<Jwt>> validators = new ArrayList<>();

@@ -47,6 +47,7 @@ spring:
       resourceserver:
         jwt:
           issuer-uri: ${OAUTH2_ISSUER_URI:http://vaultcore-keycloak:8080/realms/vaultcore}
+          jwk-set-uri: ${OAUTH2_JWK_SET_URI:http://vaultcore-keycloak:8080/realms/vaultcore/protocol/openid-connect/certs}
 
   threads:
     virtual:

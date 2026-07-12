@@ -11,15 +11,17 @@ export const useAuthStore = create((set) => ({
   authenticated: false,
   roles: [],
   username: null,
+  sessionStartedAt: null,
 
-  setAuth: ({ authenticated, roles, username }) =>
+  setAuth: ({ authenticated, roles, username, sessionStartedAt }) =>
     set({
       authenticated: !!authenticated,
       roles: roles ?? [],
       username: username ?? null,
+      sessionStartedAt: sessionStartedAt ?? null,
     }),
 
-  clearAuth: () => set({ authenticated: false, roles: [], username: null }),
+  clearAuth: () => set({ authenticated: false, roles: [], username: null, sessionStartedAt: null }),
 }));
 
 // Selectors — keep role logic in one place.
@@ -27,3 +29,4 @@ export const selectIsAuthenticated = (s) => s.authenticated;
 export const selectRoles = (s) => s.roles;
 export const selectIsAdmin = (s) => s.roles.includes("ADMIN");
 export const selectUsername = (s) => s.username;
+export const selectSessionStartedAt = (s) => s.sessionStartedAt;

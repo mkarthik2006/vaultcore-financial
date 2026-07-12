@@ -34,8 +34,8 @@ services:
       KC_DB_SCHEMA: ${KEYCLOAK_DB_SCHEMA}
       KC_HTTP_ENABLED: "true"
       KC_HOSTNAME_STRICT: "false"
-      KC_HOSTNAME_URL: "http://vaultcore-keycloak:8080"
-      KC_HOSTNAME_ADMIN_URL: "http://vaultcore-keycloak:8080"
+      KC_HOSTNAME_URL: "http://localhost:8082/auth"
+      KC_HOSTNAME_ADMIN_URL: "http://localhost:8082/auth"
       KC_PROXY_HEADERS: "xforwarded"
     depends_on:
       db:
