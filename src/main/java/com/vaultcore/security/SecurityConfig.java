@@ -28,12 +28,15 @@ import java.time.Duration;
 import java.util.*;
 
 @Configuration
-@Profile("!test") 
 public class SecurityConfig {
     // The security FILTER CHAIN is active in all profiles so tests exercise the real production
     // authorization semantics (stateless, CSRF-disabled bearer API, ownership/role rules). Only the
     // real Keycloak-backed JwtDecoder is profile-gated (see jwtDecoder() below); tests supply a mock
     // decoder via TestSecurityConfig.
+    //
+    // NOTE: do NOT put @Profile("!test") on this class. Doing so disables the whole filter chain in
+    // the test profile, so Boot's default chain (CSRF on) takes over and an unauthenticated POST
+    // returns 403 instead of 401 — breaking TransferAuthorizationIT. Gate only jwtDecoder() below.
 
     private final RestAuthenticationEntryPoint entryPoint;
 

@@ -73,6 +73,31 @@ class StockPriceClientTest {
     }
 
     @Test
+    void priceRoundTripIsUnder300ms() throws IOException {
+        // Week-3 review criterion: stock-price round trip must be under 300ms.
+        HttpServer server = startServer(0, (symbol) ->
+            "{\"symbol\":\"" + symbol + "\",\"price\":185.32}"
+        );
+        StockPriceClient client = new StockPriceClient(
+            "http://localhost:" + server.getAddress().getPort() + "/api",
+            2000,
+            250 // 250ms client timeout is itself a hard upper bound on the round trip
+        );
+
+        // Warm the HTTP stack / RestClient with a different symbol so the measured call is uncached.
+        client.getPrices(Set.of("MSFT"));
+
+        long start = System.nanoTime();
+        Map<String, BigDecimal> prices = client.getPrices(Set.of("AAPL")); // fresh, uncached fetch
+        long elapsedMs = (System.nanoTime() - start) / 1_000_000;
+
+        assertEquals(new BigDecimal("185.32"), prices.get("AAPL"));
+        assertTrue(elapsedMs < 300, "stock price round trip took " + elapsedMs + "ms (>= 300ms)");
+
+        server.stop(0);
+    }
+
+    @Test
     void cacheHitVsMiss() throws IOException {
         AtomicInteger callCount = new AtomicInteger();
 
